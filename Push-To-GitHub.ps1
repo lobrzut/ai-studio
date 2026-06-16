@@ -17,9 +17,14 @@ if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     throw 'GitHub CLI (gh) not found. Install: winget install GitHub.cli'
 }
 
-$auth = gh auth status 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Write-Host 'Log in to GitHub first:' -ForegroundColor Yellow
+$authOk = $false
+try {
+    gh auth status *> $null
+    $authOk = $LASTEXITCODE -eq 0
+} catch { }
+
+if (-not $authOk) {
+    Write-Host 'Log in to GitHub (use account: lobrzut):' -ForegroundColor Yellow
     gh auth login -h github.com -p https -w -s repo,read:org
 }
 
