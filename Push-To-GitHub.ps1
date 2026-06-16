@@ -3,11 +3,11 @@
 .SYNOPSIS
   Create GitHub repo (if needed) and push main branch.
 .PARAMETER Repo
-  GitHub slug, default: helluk/ai-studio-portable
+  GitHub slug, default: lobrzut/ai-studio-portable
 #>
 [CmdletBinding()]
 param(
-    [string]$Repo = 'helluk/ai-studio-portable'
+    [string]$Repo = 'lobrzut/ai-studio-portable'
 )
 
 $ErrorActionPreference = 'Stop'
