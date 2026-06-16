@@ -1,0 +1,70 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+.cursor/
+.run/
+*.tmp
+*.bak
+*.swp
+
+# Local logs
+logs/
+*.log
+
+# Runtime lock/cache files
+*.pid
+*.lock
+*.cache
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Nested repositories (custom nodes cloned with git)
+**/.git/
+
+# -----------------------------------------------------------------------------
+# Portable runtimes (installed locally by Install.bat — do NOT publish)
+# -----------------------------------------------------------------------------
+ACE-Step/python/
+ACE-Step/ffmpeg/
+ACE-Step/PortableGit/
+ACE-Step/models/
+ACE-Step/ACE-Step-1.5/
+
+ComfyUI/python/
+ComfyUI/ffmpeg/
+ComfyUI/PortableGit/
+ComfyUI/deepspeed_stub/
+ComfyUI/ComfyUI/
+
+# Heavy model / generated media artifacts
+ComfyUI/ComfyUI/models/
+ComfyUI/ComfyUI/output/
+ComfyUI/ComfyUI/input/
+ComfyUI/ComfyUI/temp/
+
+# Toolkit generated outputs / job inbox
+Toolkit/Outputs/
+Toolkit/References/
+Toolkit/inbox/
+Toolkit/workflows/
+
+# Local machine profiles / env
+ACE-Step/gpu_profile.env
+ComfyUI/gpu_profile.env
+Toolkit/gpu-idle.env
+.env
+*.env.local
+
+# One-off local migration helpers (machine-specific paths)
+Usun-Pusty-MusicStudio.bat
+Finish-Rename.bat
+Finish-Rename.ps1
+MIGRATE.txt
