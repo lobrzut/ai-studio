@@ -1,0 +1,390 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Studio Portable</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=20">
+  <link rel="stylesheet" href="/motion.css?v=20">
+</head>
+<body class="dashboard">
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-a"></div>
+  <div class="bg-glow bg-glow-b"></div>
+
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="1.5" opacity=".35"/><path d="M14 30V18l10 6 10-6v12l-10-6-10 6z" fill="currentColor"/></svg>
+          </div>
+          <div>
+            <h1>AI Studio Portable</h1>
+            <p class="tagline">ComfyUI · grafika &amp; workflow · <span class="accent">ACE-Step</span> · muzyka · Toolkit</p>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary" data-action="start_stack" title="Uruchamia ACE + Comfy (dashboard zostaje)">Start AI</button>
+          <button type="button" class="btn btn-restart" data-action="restart_stack" title="Stop + Start (ACE, ComfyUI, dashboard)">Restart</button>
+          <button type="button" class="btn btn-ghost" data-action="stop_stack" title="Zatrzymuje ACE + Comfy. Dashboard zostaje.">Stop AI</button>
+        </div>
+      </div>
+
+      <div id="status-banner" class="status-banner partial">Sprawdzam serwisy...</div>
+
+      <div class="chips" role="status">
+        <div id="chip-ace" class="chip offline chip-svc">
+          <span class="dot"></span>
+          <span class="chip-title">ACE-Step</span>
+          <span class="chip-meta">:7870</span>
+          <span class="chip-label">offline</span>
+          <div class="chip-ctrl">
+            <button type="button" class="chip-btn chip-btn-start" data-action="start_ace">Start</button>
+            <button type="button" class="chip-btn chip-btn-stop" data-action="stop_ace">Stop</button>
+            <a class="chip-link" href="http://127.0.0.1:7870/" target="_blank" rel="noopener">Otworz</a>
+          </div>
+        </div>
+        <div id="chip-comfy" class="chip offline chip-svc">
+          <span class="dot"></span>
+          <span class="chip-title">ComfyUI</span>
+          <span class="chip-meta">:7871</span>
+          <span class="chip-label">offline</span>
+          <div class="chip-ctrl">
+            <button type="button" class="chip-btn chip-btn-start" data-action="start_comfy">Start</button>
+            <button type="button" class="chip-btn chip-btn-stop" data-action="stop_comfy">Stop</button>
+            <a class="chip-link" href="http://127.0.0.1:7871/" target="_blank" rel="noopener">Otworz</a>
+          </div>
+        </div>
+        <div id="chip-hub" class="chip online">
+          <span class="dot"></span>
+          <span class="chip-title">Dashboard</span>
+          <span class="chip-meta">:7880</span>
+          <span class="chip-label">online</span>
+        </div>
+      </div>
+
+      <div id="gpu-meter" class="gpu-meter gpu-meter-compact" aria-label="Zasoby GPU i stacku">
+        <div class="gpu-meter-head">
+          <span class="gpu-meter-title">Zasoby</span>
+          <span id="gpu-meter-name" class="gpu-meter-name">GPU</span>
+        </div>
+        <div class="gpu-meter-row gpu-meter-main">
+          <span class="gpu-meter-label">VRAM</span>
+          <div class="gpu-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="gpu-bar-vram" class="gpu-bar-fill vram"></div>
+          </div>
+          <span id="gpu-meter-vram" class="gpu-meter-side">-- / -- GB</span>
+        </div>
+        <div class="gpu-meter-row gpu-meter-sub">
+          <span class="gpu-meter-label">GPU</span>
+          <div class="gpu-bar gpu-bar-dim" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="gpu-bar-util" class="gpu-bar-fill util"></div>
+          </div>
+          <span id="gpu-meter-util-txt" class="gpu-meter-side">--%</span>
+        </div>
+        <div id="gpu-meter-stack" class="gpu-meter-stack">RAM stack -- | CPU --</div>
+        <div id="gpu-meter-breakdown" class="gpu-meter-breakdown"></div>
+        <p id="gpu-meter-hint" class="gpu-meter-hint">co 5 s | po runie Comfy soft free ~60 s</p>
+      </div>
+    </header>
+
+    <section class="launch-pad">
+      <h2 class="section-label">Wejscie do uslug</h2>
+      <div class="launch-grid">
+        <button type="button" class="launch-card launch-comfy" data-action="open_comfy">
+          <span class="launch-icon ico ico-comfy" aria-hidden="true"></span>
+          <span class="launch-name">ComfyUI</span>
+          <span class="launch-desc">Grafika, wideo, Manager, workflow</span>
+          <span class="launch-cta">Otworz UI</span>
+        </button>
+        <button type="button" class="launch-card launch-soft-vram" data-action="soft_free_vram">
+          <span class="launch-icon ico ico-vram" aria-hidden="true"></span>
+          <span class="launch-name">Zwolnij VRAM (soft)</span>
+          <span class="launch-desc">Comfy zostaje online -zrzuca modele z VRAM gdy kolejka pusta</span>
+          <span class="launch-cta">Comfy soft</span>
+        </button>
+        <button type="button" class="launch-card launch-gpu-free" data-action="force_free_gpu" data-confirm="Zatrzymac ComfyUI i ACE-Step? VRAM zostanie zwolnione. Nic nie wstanie automatycznie -potem Start stack.">
+          <span class="launch-icon ico ico-bolt" aria-hidden="true"></span>
+          <span class="launch-name">Zwolnij GPU (hard)</span>
+          <span class="launch-desc">Zabija Comfy + ACE. Gdy soft nie wystarcza lub zombie ROCm.</span>
+          <span class="launch-cta">Stop AI GPU</span>
+        </button>
+        <button type="button" class="card card-soft-idle" data-action="gpu_idle_on" title="Co 3 min gdy Comfy bez kolejki -soft free VRAM">
+          <span class="card-icon ico ico-idle" aria-hidden="true"></span>
+          <span class="card-name">Auto idle VRAM</span>
+          <span class="card-desc">Wlacz: Comfy sam zrzuca modele po bezczynnosci (3 min)</span>
+        </button>
+        <button type="button" class="launch-card launch-comfy-restart" data-action="restart_comfy" data-confirm="Zatrzymac stack AI i uruchomic od nowa tylko ComfyUI? (ACE zostanie wylaczony)">
+          <span class="launch-icon ico ico-restart" aria-hidden="true"></span>
+          <span class="launch-name">Restart Comfy</span>
+          <span class="launch-desc">Po zwolnieniu GPU -tylko ComfyUI :7871</span>
+          <span class="launch-cta">Comfy od nowa</span>
+        </button>
+        <button type="button" class="launch-card launch-ace" data-action="open_ace">
+          <span class="launch-icon ico ico-music" aria-hidden="true"></span>
+          <span class="launch-name">ACE-Step</span>
+          <span class="launch-desc">Generacja muzyki, turbo, Gradio</span>
+          <span class="launch-cta">Otworz UI</span>
+        </button>
+        <button type="button" class="launch-card launch-ace-folder" data-action="ace_outputs" title="Folder z wygenerowanymi utworami (gradio_outputs)">
+          <span class="launch-icon ico ico-folder-out" aria-hidden="true"></span>
+          <span class="launch-name">ACE -utwory</span>
+          <span class="launch-desc">Wszystkie wygenerowane MP3/WAV |<code>gradio_outputs</code> |podfoldery batch_*</span>
+          <span class="launch-cta">Otworz folder</span>
+        </button>
+        <div class="launch-card launch-comfy-out comfy-out-card" title="ComfyUI output — ostatnie rendery">
+          <div class="comfy-out-visual" id="comfy-out-visual">
+            <div class="comfy-out-bg" id="comfy-out-bg" aria-hidden="true"></div>
+            <div class="comfy-out-shade" aria-hidden="true"></div>
+            <span class="comfy-out-badge">ComfyUI output</span>
+            <div class="comfy-out-thumbs" id="comfy-out-thumbs" aria-hidden="true"></div>
+          </div>
+          <div class="comfy-out-body">
+            <span class="launch-icon ico ico-comfy" aria-hidden="true"></span>
+            <span class="launch-name">Ostatnie rendery</span>
+            <span class="launch-desc">PNG/JPG z <code>ComfyUI/output</code> — tlo = najnowszy plik</span>
+            <div class="comfy-out-actions">
+              <button type="button" class="btn-inline btn-inline-primary" data-action="comfy_outputs">Otworz folder</button>
+              <button type="button" class="btn-inline" data-open-gallery>Galeria</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-label"><span class="num">0</span> Stack</h2>
+      <div class="grid">
+        <button type="button" class="card" data-action="start_stack">
+          <span class="card-icon ico ico-play" aria-hidden="true"></span>
+          <span class="card-name">Start AI</span>
+          <span class="card-desc">Wlacza ACE + Comfy (osobne Start/Stop na chipach)</span>
+        </button>
+        <button type="button" class="card" data-action="stop_stack">
+          <span class="card-icon ico ico-stop" aria-hidden="true"></span>
+          <span class="card-name">Stop AI</span>
+          <span class="card-desc">Wylacza ACE + Comfy. Dashboard :7880 zostaje</span>
+        </button>
+        <button type="button" class="card" data-action="restart_stack">
+          <span class="card-icon ico ico-restart" aria-hidden="true"></span>
+          <span class="card-name">Restart stack</span>
+          <span class="card-desc">Stop, potem Start -ACE + Comfy + dashboard</span>
+        </button>
+        <button type="button" class="card card-gpu-free" data-action="force_free_gpu" data-confirm="Zatrzymac ComfyUI i ACE-Step? VRAM zwolnione -bez auto-restartu.">
+          <span class="card-icon ico ico-bolt" aria-hidden="true"></span>
+          <span class="card-name">Zwolnij GPU</span>
+          <span class="card-desc">Stop Comfy + ACE (VRAM). Potem Start stack.</span>
+        </button>
+        <button type="button" class="card" data-action="install">
+          <span class="card-icon ico ico-gear" aria-hidden="true"></span>
+          <span class="card-name">Install</span>
+          <span class="card-desc">Po przeniesieniu folderu na nowy PC</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="drop-section">
+      <h2 class="section-label"><span class="num">1</span> Post-prod -przeciagnij plik audio</h2>
+      <p class="section-hint">mp3 | wav | flac | m4a | opus - po upuszczeniu otworzy sie okno PowerShell z postepm (jak drag na .bat). Strona musi byc <strong>http://127.0.0.1:7880/</strong> (nie plik z dysku).</p>
+
+      <details class="drop-legend" open>
+        <summary>Ktory kafelek wybrac? -podpowiedzi</summary>
+        <div class="legend-grid">
+          <article class="legend-item">
+            <h3><span class="legend-icon ico ico-diamond" aria-hidden="true"></span> Master</h3>
+            <p><strong>Co robi:</strong> Ustawia docelowa glosnosc (ffmpeg loudnorm, 2 przebiegi).</p>
+            <p><strong>Kiedy:</strong> Mix juz brzmi OK, chcesz glosny, spojny eksport (-12 LUFS).</p>
+            <p class="legend-no"><strong>Nie robi:</strong> Nie naprawia slabej jakosci MP3 ani nie "AI-enhance".</p>
+            <p class="legend-out">Wynik: <code>nazwa_mastered.ext</code> obok oryginalu</p>
+          </article>
+          <article class="legend-item">
+            <h3><span class="legend-icon ico ico-comfy" aria-hidden="true"></span> Stems</h3>
+            <p><strong>Co robi:</strong> Rozdziela utwor na 4 sciezki (Demucs: wokal, bas, perkusja, inne).</p>
+            <p><strong>Kiedy:</strong> Remiks, karaoke, edycja pojedynczych warstw.</p>
+            <p class="legend-out">Wynik: <code>Toolkit/Outputs/stems/</code></p>
+          </article>
+          <article class="legend-item legend-wide">
+            <h3><span class="legend-icon ico ico-match" aria-hidden="true"></span> Match</h3>
+            <p><strong>Co robi:</strong> Auto-mastering -dopasowuje EQ, kompresje i glosnosc twojego mixu do <em>referencji</em> (np. ulubiony utwor).</p>
+            <p><strong>Kiedy:</strong> Twoj mix brzmi "cienko" / inaczej niz wzorzec -najblizej "ulepsz brzmienie" w tym stacku.</p>
+            <p><strong>Jak:</strong> Lewa strefa = twoj utwor; prawa = referencja (opcja). Bez referencji -bierze najnowszy plik z <code>References/</code>. Mozesz upuscic 2 pliki naraz na caly kafelek.</p>
+            <p class="legend-out">Wynik: <code>Toolkit/Outputs/mastered/</code></p>
+          </article>
+          <article class="legend-item">
+            <h3><span class="legend-icon ico ico-lyrics" aria-hidden="true"></span> Lyrics</h3>
+            <p><strong>Co robi:</strong> Rozpoznaje tekst (Whisper) i zapisuje napisy zsynchronizowane w czasie.</p>
+            <p><strong>Kiedy:</strong> LRC do odtwarzacza, SRT/VTT do wideo, karaoke.</p>
+            <p class="legend-out">Wynik: <code>Toolkit/Outputs/lyrics/</code> (.lrc, .srt, .vtt)</p>
+          </article>
+          <article class="legend-item">
+            <h3><span class="legend-icon ico ico-silence" aria-hidden="true"></span> Napraw cisze</h3>
+            <p><strong>Co robi:</strong> Skanuje utwor i wypisuje <em>sekundy ciszy</em> (dziury po ACE), zapisuje raport TXT.</p>
+            <p><strong>Kiedy:</strong> Wygenerowany kawalek ma puste fragmenty -tam mialo byc audio, a jest cisza.</p>
+            <p><strong>Dalej:</strong> ACE-Step tryb <strong>Repaint</strong> z sekundami z raportu (otwiera :7870).</p>
+            <p class="legend-out">Wynik: <code>Toolkit/Outputs/silence/*_repaint_*.txt</code></p>
+          </article>
+          <article class="legend-item legend-wide">
+            <h3><span class="legend-icon ico ico-enhance" aria-hidden="true"></span> Enhance</h3>
+            <p><strong>Lekki:</strong> ffmpeg -odszumienie, EQ, kompresja (szybko, bez instalacji AI).</p>
+            <p><strong>Sredni:</strong> Resemble Enhance -AI denoise + poprawa (mowa/wokal najlepiej; instaluje <code>Install.bat</code>).</p>
+            <p><strong>Ciezki:</strong> kopiuje plik do kolejki ComfyUI + otwiera :7871 (workflow audio w Managerze).</p>
+            <p class="legend-out">Wynik: <code>Outputs/enhance/light|medium|comfy_queue/</code></p>
+          </article>
+        </div>
+      </details>
+
+      <div class="grid grid-drop">
+        <div class="drop-card" data-drop="master" title="Master: normalizacja glosnosci (LUFS). Nie poprawia jakosci nagrania.">
+          <p class="drop-tag">Glosnosc / eksport</p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-diamond" aria-hidden="true"></span>
+            <span class="drop-title">Master</span>
+            <span class="drop-hint">Upusc utwor tutaj</span>
+          </div>
+          <p class="drop-blurb">2-pass loudnorm |domyslnie -12 LUFS |plik <em>_mastered</em> obok zrodla</p>
+        </div>
+        <div class="drop-card" data-drop="stems" title="Stems: rozdzielenie na 4 sciezki WAV (Demucs).">
+          <p class="drop-tag">Rozdzielenie sciezek</p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-comfy" aria-hidden="true"></span>
+            <span class="drop-title">Stems</span>
+            <span class="drop-hint">Upusc utwor tutaj</span>
+          </div>
+          <p class="drop-blurb">Demucs -&gt; 4x WAV (wokal, bas, drums, reszta) -&gt; Outputs/stems/</p>
+        </div>
+        <div class="drop-card drop-card-wide" data-drop="match" title="Match: mastering pod brzmienie referencji (Matchering).">
+          <p class="drop-tag">Brzmienie jak referencja</p>
+          <div class="drop-zones-row">
+            <div class="drop-zone drop-zone-half" data-match-slot="target">
+              <span class="drop-icon ico ico-match" aria-hidden="true"></span>
+              <span class="drop-title">Match -twoj utwor</span>
+              <span class="drop-hint">Mix do dopasowania</span>
+            </div>
+            <div class="drop-zone drop-zone-half drop-zone-dim" data-match-slot="reference">
+              <span class="drop-title">Referencja</span>
+              <span class="drop-hint">Opcja |lub z References/</span>
+            </div>
+          </div>
+          <p class="drop-blurb">Matchering: EQ + kompresja + LUFS jak wzorzec |2 pliki naraz = target + ref</p>
+        </div>
+        <div class="drop-card" data-drop="lyrics" title="Lyrics: transkrypcja i napisy LRC/SRT/VTT (Whisper).">
+          <p class="drop-tag">Tekst / napisy</p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-lyrics" aria-hidden="true"></span>
+            <span class="drop-title">Lyrics</span>
+            <span class="drop-hint">Upusc utwor tutaj</span>
+          </div>
+          <p class="drop-blurb">Whisper -&gt; LRC, SRT, VTT w Outputs/lyrics/</p>
+        </div>
+        <div class="drop-card drop-card-silence" data-drop="silence" title="Napraw cisze: skan dziur + sekundy do ACE Repaint.">
+          <p class="drop-tag">Dziury po ACE</p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-silence" aria-hidden="true"></span>
+            <span class="drop-title">Napraw cisze</span>
+            <span class="drop-hint">Skan + raport Repaint</span>
+          </div>
+          <p class="drop-blurb">Wykrywa cisze |raport TXT |otwiera ACE :7870 |Repaint wg sekund</p>
+        </div>
+        <div class="drop-card drop-card-wide" data-drop="enhance" title="Enhance: poprawa jakosci -wybierz tryb, potem upusc plik.">
+          <p class="drop-tag">Poprawa jakosci / enhance</p>
+          <div class="enhance-modes" role="group" aria-label="Tryb Enhance">
+            <label class="mode-pill"><input type="radio" name="enhance-mode" value="light" checked><span>Lekki</span><small>ffmpeg</small></label>
+            <label class="mode-pill"><input type="radio" name="enhance-mode" value="medium"><span>Sredni</span><small>AI</small></label>
+            <label class="mode-pill"><input type="radio" name="enhance-mode" value="heavy"><span>Ciezki</span><small>ComfyUI</small></label>
+          </div>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-enhance" aria-hidden="true"></span>
+            <span class="drop-title">Enhance</span>
+            <span class="drop-hint">Wybierz tryb |upusc utwor</span>
+          </div>
+          <p class="drop-blurb">light -&gt; Outputs/enhance/light/ | medium -&gt; AI WAV | heavy -&gt; kolejka + ComfyUI</p>
+        </div>
+      </div>
+      <div class="drop-actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="comfy_outputs">Comfy — output</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="ace_outputs">ACE -utwory</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="outputs">Toolkit Outputs</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="references">References</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-label"><span class="num">2</span> Foldery</h2>
+      <div class="grid grid-sm">
+        <button type="button" class="card card-comfy-out" data-action="comfy_outputs">
+          <span class="card-icon ico ico-comfy" aria-hidden="true"></span>
+          <span class="card-name">Comfy output</span>
+          <span class="card-desc">ComfyUI/output |obrazy z workflow</span>
+        </button>
+        <button type="button" class="card" data-action="outputs">
+          <span class="card-icon ico ico-folder" aria-hidden="true"></span>
+          <span class="card-name">Outputs</span>
+        </button>
+        <button type="button" class="card" data-action="references">
+          <span class="card-icon ico ico-folder-ref" aria-hidden="true"></span>
+          <span class="card-name">References</span>
+        </button>
+        <button type="button" class="card card-ace-out" data-action="ace_outputs">
+          <span class="card-icon ico ico-music" aria-hidden="true"></span>
+          <span class="card-name">ACE -utwory</span>
+          <span class="card-desc">gradio_outputs |generacje z :7870</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="soon">
+      <h2 class="section-label"><span class="num">3</span> Wkrotce</h2>
+      <div class="grid">
+        <div class="card disabled"><span class="card-name">Voice-Swap (RVC)</span></div>
+        <div class="card disabled"><span class="card-name">Cover (Gemini)</span></div>
+        <div class="card disabled"><span class="card-name">MV (Remotion)</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>RX 6800 |ROCm |portable</span>
+      <button type="button" class="linkish" data-action="readme">README</button>
+    </footer>
+  </div>
+
+  <div class="gallery-modal" id="gallery-modal" hidden aria-hidden="true">
+    <div class="gallery-modal-backdrop" data-close-gallery aria-hidden="true"></div>
+    <div class="gallery-modal-panel" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title">
+      <button type="button" class="gallery-modal-close" id="gallery-modal-close" aria-label="Zamknij galerie">&times;</button>
+      <div class="gallery-head">
+        <h2 class="section-label gallery-title" id="gallery-modal-title"><span class="num">G</span> Galeria ComfyUI</h2>
+        <p class="gallery-meta" id="gallery-meta">Laduje...</p>
+        <div class="gallery-toolbar">
+          <button type="button" class="btn btn-ghost btn-sm" data-action="comfy_outputs">Folder output</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="gallery-refresh">Odswiez</button>
+        </div>
+      </div>
+      <nav class="gallery-browse" id="gallery-browse" aria-label="Foldery output"></nav>
+      <div class="gallery-folders" id="gallery-folders" hidden></div>
+      <div class="gallery-grid" id="gallery-grid" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="gallery-lightbox" id="gallery-lightbox" hidden aria-hidden="true">
+    <button type="button" class="gallery-lb-close" id="gallery-lb-close" aria-label="Zamknij">&times;</button>
+    <button type="button" class="gallery-lb-nav gallery-lb-prev" id="gallery-lb-prev" aria-label="Poprzedni">&#8249;</button>
+    <button type="button" class="gallery-lb-nav gallery-lb-next" id="gallery-lb-next" aria-label="Nastepny">&#8250;</button>
+    <p class="gallery-lb-loading" id="gallery-lb-loading" hidden>Laduje podglad…</p>
+    <figure class="gallery-lb-figure">
+      <img id="gallery-lb-img" alt="" decoding="async" />
+      <figcaption id="gallery-lb-cap"></figcaption>
+    </figure>
+    <a class="gallery-lb-open" id="gallery-lb-open" href="#" target="_blank" rel="noopener">Otworz plik</a>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/app.js?v=20"></script>
+</body>
+</html>
