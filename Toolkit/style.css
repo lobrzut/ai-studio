@@ -122,6 +122,19 @@ body.dashboard {
   color: var(--muted);
   font-weight: 500;
 }
+.edition-pill {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+}
 .tagline .accent { color: var(--yellow); }
 
 .hero-actions {

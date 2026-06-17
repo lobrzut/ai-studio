@@ -48,13 +48,13 @@ try {
 
 if (-not $exists) {
     Write-Host "Creating public repo $Repo ..." -ForegroundColor Cyan
-    gh repo create $Repo --public --source=. --remote=origin --description 'Portable Windows AI studio: ComfyUI workflows, ACE-Step music generation, and a local dashboard hub with audio post-production tools.'
+    gh repo create $Repo --public --source=. --remote=origin --description 'AI Studio Portable (Local): Windows folder-based AI studio — ComfyUI, ACE-Step, dashboard hub, audio post-prod.'
 }
 
 Write-Host 'Pushing main ...' -ForegroundColor Cyan
 git push -u origin main
 
-$topics = 'comfyui,ace-step,windows,portable,powershell,local-ai,audio-processing,dashboard,amd-gpu,rocm'
+$topics = 'comfyui,ace-step,windows,portable,powershell,local-ai,local-edition,audio-processing,dashboard,amd-gpu,rocm'
 gh repo edit $Repo --add-topic ($topics -split ',')
 
 Write-Host ''
