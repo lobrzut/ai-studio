@@ -7,7 +7,7 @@ Co to jest:
 
 Pierwsze uruchomienie:
   1. Dwuklik 'Install.bat'  → wykryje GPU i pobierze wlasciwy stos (5-10 min + ~5-10 GB).
-  2. Dwuklik 'Start.bat'    → uruchomi serwer i otworzy przegladarke na 127.0.0.1:7860.
+  2. Dwuklik 'Start.bat'    → uruchomi serwer i otworzy przegladarke na 127.0.0.1:7870.
                                PIERWSZE uruchomienie pobiera modele (~5-10 GB) do models/.
   3. Dwuklik 'Stop.bat'     → zatrzyma serwer.
 
