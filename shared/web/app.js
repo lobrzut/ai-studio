@@ -227,6 +227,12 @@ async function refreshStatus() {
     if (s.locale && window.I18n && I18n.getLocale() !== s.locale) {
       await I18n.setLocale(s.locale, false);
     }
+    const pill = $('#edition-pill');
+    if (pill && s.hub?.edition) {
+      const key = s.hub.edition === 'linux' ? 'edition.linux' : 'edition.windows';
+      pill.textContent = t(key);
+      pill.dataset.i18n = key;
+    }
     setChip('ace', s.ace.state || (s.ace.online ? 'online' : 'offline'), s.ace.url);
     setChip('comfy', s.comfy.state || (s.comfy.online ? 'online' : 'offline'), s.comfy.url);
     setChip('hub', s.hub.online ? 'online' : 'offline', s.hub.url);

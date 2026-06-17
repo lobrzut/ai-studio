@@ -1,0 +1,16 @@
+[Unit]
+Description=AI Studio ComfyUI (native)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=@DATA_DIR@/comfyui/ComfyUI
+Environment=DATA_DIR=@DATA_DIR@
+ExecStart=@DATA_DIR@/venv/bin/python main.py --listen 0.0.0.0 --port 7871
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

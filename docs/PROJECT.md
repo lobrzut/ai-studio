@@ -1,26 +1,52 @@
-# AI Studio — project line
+# AI Studio — Windows & Linux editions
 
-## This repository: **Local** edition
+Single monorepo: **shared UI**, **windows/** stack, **linux/** deploy.
 
-| | Local (this repo) | Server (planned) |
-|---|-------------------|------------------|
-| **Repo** | `lobrzut/ai-studio-portable` | `lobrzut/ai-studio-server` |
-| **Target** | One Windows PC, portable folder | Remote host / LAN server (Debian) |
-| **Install** | `Install.bat` — embedded Python, ROCm/CUDA profile | `curl .../bootstrap.sh \| sudo bash` |
-| **Dashboard** | `http://127.0.0.1:7880/` + tray icon | HTTPS, auth, multi-user (TBD) |
-| **Data** | Local disks only (`output/`, `Toolkit/Outputs/`) | Shared storage, API (TBD) |
-| **Use case** | USB copy, homelab workstation, offline GPU | Team access, always-on inference |
+## Editions
 
-**Edition marker:** `EDITION=local` (see `EDITION` file in repo root).
+| | **Windows** | **Linux** |
+|---|-------------|-----------|
+| **Folder** | `windows/` | `linux/` |
+| **Install** | `Install.bat` (root wrapper) | `curl …/linux/bootstrap.sh \| sudo bash` |
+| **Runtime** | Portable Python + ROCm/CUDA on host | Docker (NVIDIA/CPU) or native ROCm |
+| **Dashboard** | PowerShell hub + tray | Python hub (Docker or systemd) |
+| **Data** | Inside repo folder (`windows/logs`, outputs) | `/var/lib/ai-studio` (default) |
+| **Use case** | Desktop, USB portable, RX 6800 workstation | Headless server, LAN / VPS |
 
-This repo is the **reference implementation** for workflows (ComfyUI, ACE-Step, Toolkit post-prod). The server edition will reuse concepts and UX patterns from here, not this folder structure as-is.
+## Shared
 
-## Status
+| Path | Contents |
+|------|----------|
+| `shared/web/` | Dashboard HTML/CSS/JS, i18n (PL/EN) |
+| `shared/hub/` | Hub API (Python/FastAPI) — used on Linux; Windows still uses `windows/Toolkit/Dashboard-Server.ps1` |
 
-- **Local** — active development (PL/EN dashboard, tray stack, portable install).
-- **Server** — `ai-studio-server` repo: **one-command install** (`curl | sudo bash` on Debian)
+Edition badge in UI comes from `/api/status` → `hub.edition`: `windows` | `linux`.
 
-## Naming (working)
+## Install paths
 
-- Local: **AI Studio Portable (Local)**
-- Server: **AI Studio Server** (working name)
+**Windows** — clone repo, run from root:
+
+```bat
+Install.bat
+Start.bat
+```
+
+**Linux** — one line:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lobrzut/ai-studio/main/linux/bootstrap.sh | sudo bash
+```
+
+## GitHub
+
+- Canonical repo: **`lobrzut/ai-studio`**
+- Former `ai-studio-portable` and `ai-studio-server` are consolidated here.
+
+## Roadmap
+
+- [x] Monorepo `shared/` + `windows/` + `linux/`
+- [x] One-command Linux bootstrap
+- [ ] Windows hub on shared Python (optional)
+- [ ] ACE-Step Linux container
+- [ ] Toolkit post-prod on Linux workers
+- [ ] HTTPS / auth (Caddy)

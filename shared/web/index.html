@@ -1,0 +1,362 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Studio</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=21">
+  <link rel="stylesheet" href="/motion.css?v=21">
+</head>
+<body class="dashboard">
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-a"></div>
+  <div class="bg-glow bg-glow-b"></div>
+
+  <div class="shell">
+    <header class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="1.5" opacity=".35"/><path d="M14 30V18l10 6 10-6v12l-10-6-10 6z" fill="currentColor"/></svg>
+          </div>
+          <div>
+            <h1>AI Studio</h1>
+            <p class="edition-pill" id="edition-pill" data-i18n="edition.windows"></p>
+            <p class="tagline" data-i18n="tagline"></p>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <div class="lang-switch" role="group" aria-label="Language">
+            <button type="button" class="lang-btn" data-lang-btn="pl" aria-pressed="true">PL</button>
+            <button type="button" class="lang-btn" data-lang-btn="en" aria-pressed="false">EN</button>
+          </div>
+          <button type="button" class="btn btn-primary" data-action="start_stack" data-i18n="btn.start_ai" data-i18n-title="btn.start_ai_title"></button>
+          <button type="button" class="btn btn-restart" data-action="restart_stack" data-i18n="btn.restart" data-i18n-title="btn.restart_title"></button>
+          <button type="button" class="btn btn-ghost" data-action="stop_stack" data-i18n="btn.stop_ai" data-i18n-title="btn.stop_ai_title"></button>
+        </div>
+      </div>
+
+      <div id="status-banner" class="status-banner partial" data-i18n="status.checking"></div>
+
+      <div class="chips" role="status">
+        <div id="chip-ace" class="chip offline chip-svc">
+          <span class="dot"></span>
+          <span class="chip-title">ACE-Step</span>
+          <span class="chip-meta">:7870</span>
+          <span class="chip-label" data-i18n="chip.offline"></span>
+          <div class="chip-ctrl">
+            <button type="button" class="chip-btn chip-btn-start" data-action="start_ace" data-i18n="chip.start"></button>
+            <button type="button" class="chip-btn chip-btn-stop" data-action="stop_ace" data-i18n="chip.stop"></button>
+            <a class="chip-link" href="http://127.0.0.1:7870/" target="_blank" rel="noopener" data-i18n="chip.open"></a>
+          </div>
+        </div>
+        <div id="chip-comfy" class="chip offline chip-svc">
+          <span class="dot"></span>
+          <span class="chip-title">ComfyUI</span>
+          <span class="chip-meta">:7871</span>
+          <span class="chip-label" data-i18n="chip.offline"></span>
+          <div class="chip-ctrl">
+            <button type="button" class="chip-btn chip-btn-start" data-action="start_comfy" data-i18n="chip.start"></button>
+            <button type="button" class="chip-btn chip-btn-stop" data-action="stop_comfy" data-i18n="chip.stop"></button>
+            <a class="chip-link" href="http://127.0.0.1:7871/" target="_blank" rel="noopener" data-i18n="chip.open"></a>
+          </div>
+        </div>
+        <div id="chip-hub" class="chip online">
+          <span class="dot"></span>
+          <span class="chip-title">Dashboard</span>
+          <span class="chip-meta">:7880</span>
+          <span class="chip-label" data-i18n="chip.online"></span>
+        </div>
+      </div>
+
+      <div id="gpu-meter" class="gpu-meter gpu-meter-compact" data-i18n-aria="gpu.aria">
+        <div class="gpu-meter-head">
+          <span class="gpu-meter-title" data-i18n="gpu.resources"></span>
+          <span id="gpu-meter-name" class="gpu-meter-name">GPU</span>
+        </div>
+        <div class="gpu-meter-row gpu-meter-main">
+          <span class="gpu-meter-label" data-i18n="gpu.vram"></span>
+          <div class="gpu-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="gpu-bar-vram" class="gpu-bar-fill vram"></div>
+          </div>
+          <span id="gpu-meter-vram" class="gpu-meter-side">-- / -- GB</span>
+        </div>
+        <div class="gpu-meter-row gpu-meter-sub">
+          <span class="gpu-meter-label" data-i18n="gpu.label"></span>
+          <div class="gpu-bar gpu-bar-dim" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="gpu-bar-util" class="gpu-bar-fill util"></div>
+          </div>
+          <span id="gpu-meter-util-txt" class="gpu-meter-side">--%</span>
+        </div>
+        <div id="gpu-meter-stack" class="gpu-meter-stack" data-i18n="gpu.stack_ram"></div>
+        <div id="gpu-meter-breakdown" class="gpu-meter-breakdown"></div>
+        <p id="gpu-meter-hint" class="gpu-meter-hint" data-i18n="gpu.hint"></p>
+      </div>
+    </header>
+
+    <section class="launch-pad">
+      <h2 class="section-label" data-i18n="section.launch"></h2>
+      <div class="launch-grid">
+        <button type="button" class="launch-card launch-comfy" data-action="open_comfy">
+          <span class="launch-icon ico ico-comfy" aria-hidden="true"></span>
+          <span class="launch-name">ComfyUI</span>
+          <span class="launch-desc" data-i18n="launch.comfy_desc"></span>
+          <span class="launch-cta" data-i18n="launch.open_ui"></span>
+        </button>
+        <button type="button" class="launch-card launch-soft-vram" data-action="soft_free_vram">
+          <span class="launch-icon ico ico-vram" aria-hidden="true"></span>
+          <span class="launch-name" data-i18n="launch.soft_vram"></span>
+          <span class="launch-desc" data-i18n="launch.soft_vram_desc"></span>
+          <span class="launch-cta" data-i18n="launch.soft_cta"></span>
+        </button>
+        <button type="button" class="launch-card launch-gpu-free" data-action="force_free_gpu" data-i18n-confirm="confirm.force_gpu">
+          <span class="launch-icon ico ico-bolt" aria-hidden="true"></span>
+          <span class="launch-name" data-i18n="launch.hard_gpu"></span>
+          <span class="launch-desc" data-i18n="launch.hard_gpu_desc"></span>
+          <span class="launch-cta" data-i18n="launch.hard_cta"></span>
+        </button>
+        <button type="button" class="card card-soft-idle" data-action="gpu_idle_on" data-i18n-title="launch.idle_title">
+          <span class="card-icon ico ico-idle" aria-hidden="true"></span>
+          <span class="card-name" data-i18n="launch.idle_name"></span>
+          <span class="card-desc" data-i18n="launch.idle_desc"></span>
+        </button>
+        <button type="button" class="launch-card launch-comfy-restart" data-action="restart_comfy" data-i18n-confirm="confirm.restart_comfy">
+          <span class="launch-icon ico ico-restart" aria-hidden="true"></span>
+          <span class="launch-name" data-i18n="launch.restart_comfy"></span>
+          <span class="launch-desc" data-i18n="launch.restart_comfy_desc"></span>
+          <span class="launch-cta" data-i18n="launch.restart_cta"></span>
+        </button>
+        <button type="button" class="launch-card launch-ace" data-action="open_ace">
+          <span class="launch-icon ico ico-music" aria-hidden="true"></span>
+          <span class="launch-name">ACE-Step</span>
+          <span class="launch-desc" data-i18n="launch.ace_desc"></span>
+          <span class="launch-cta" data-i18n="launch.open_ui"></span>
+        </button>
+        <button type="button" class="launch-card launch-ace-folder" data-action="ace_outputs" data-i18n-title="launch.ace_tracks_title">
+          <span class="launch-icon ico ico-folder-out" aria-hidden="true"></span>
+          <span class="launch-name" data-i18n="launch.ace_tracks"></span>
+          <span class="launch-desc" data-i18n="launch.ace_tracks_desc"></span>
+          <span class="launch-cta" data-i18n="launch.open_folder"></span>
+        </button>
+        <div class="launch-card launch-comfy-out comfy-out-card" data-i18n-title="launch.comfy_out_title">
+          <div class="comfy-out-visual" id="comfy-out-visual">
+            <div class="comfy-out-bg" id="comfy-out-bg" aria-hidden="true"></div>
+            <div class="comfy-out-shade" aria-hidden="true"></div>
+            <span class="comfy-out-badge" data-i18n="launch.comfy_out_badge"></span>
+            <div class="comfy-out-thumbs" id="comfy-out-thumbs" aria-hidden="true"></div>
+          </div>
+          <div class="comfy-out-body">
+            <span class="launch-icon ico ico-comfy" aria-hidden="true"></span>
+            <span class="launch-name" data-i18n="launch.latest_renders"></span>
+            <span class="launch-desc" data-i18n="launch.latest_desc"></span>
+            <div class="comfy-out-actions">
+              <button type="button" class="btn-inline btn-inline-primary" data-action="comfy_outputs" data-i18n="launch.open_folder"></button>
+              <button type="button" class="btn-inline" data-open-gallery data-i18n="launch.gallery"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-label"><span class="num">0</span> <span data-i18n="section.stack"></span></h2>
+      <div class="grid">
+        <button type="button" class="card" data-action="start_stack">
+          <span class="card-icon ico ico-play" aria-hidden="true"></span>
+          <span class="card-name" data-i18n="btn.start_ai"></span>
+          <span class="card-desc" data-i18n="card.start_ai_desc"></span>
+        </button>
+        <button type="button" class="card" data-action="stop_stack">
+          <span class="card-icon ico ico-stop" aria-hidden="true"></span>
+          <span class="card-name" data-i18n="btn.stop_ai"></span>
+          <span class="card-desc" data-i18n="card.stop_ai_desc"></span>
+        </button>
+        <button type="button" class="card" data-action="restart_stack">
+          <span class="card-icon ico ico-restart" aria-hidden="true"></span>
+          <span class="card-name" data-i18n="btn.restart"></span>
+          <span class="card-desc" data-i18n="card.restart_desc"></span>
+        </button>
+        <button type="button" class="card card-gpu-free" data-action="force_free_gpu" data-i18n-confirm="confirm.force_gpu_card">
+          <span class="card-icon ico ico-bolt" aria-hidden="true"></span>
+          <span class="card-name" data-i18n="card.free_gpu"></span>
+          <span class="card-desc" data-i18n="card.free_gpu_desc"></span>
+        </button>
+        <button type="button" class="card" data-action="install">
+          <span class="card-icon ico ico-gear" aria-hidden="true"></span>
+          <span class="card-name">Install</span>
+          <span class="card-desc" data-i18n="card.install_desc"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="drop-section">
+      <h2 class="section-label"><span class="num">1</span> <span data-i18n="section.postprod"></span></h2>
+      <p class="section-hint" data-i18n="postprod.hint"></p>
+
+      <details class="drop-legend" open>
+        <summary data-i18n="legend.summary"></summary>
+        <div class="legend-grid">
+          <article class="legend-item" data-legend="master"></article>
+          <article class="legend-item" data-legend="stems"></article>
+          <article class="legend-item legend-wide" data-legend="match"></article>
+          <article class="legend-item" data-legend="lyrics"></article>
+          <article class="legend-item" data-legend="silence"></article>
+          <article class="legend-item legend-wide" data-legend="enhance"></article>
+        </div>
+      </details>
+
+      <div class="grid grid-drop">
+        <div class="drop-card" data-drop="master">
+          <p class="drop-tag" data-i18n="drop.master_tag"></p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-diamond" aria-hidden="true"></span>
+            <span class="drop-title">Master</span>
+            <span class="drop-hint" data-i18n="drop.master_hint"></span>
+          </div>
+          <p class="drop-blurb" data-i18n="drop.master_blurb"></p>
+        </div>
+        <div class="drop-card" data-drop="stems">
+          <p class="drop-tag" data-i18n="drop.stems_tag"></p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-comfy" aria-hidden="true"></span>
+            <span class="drop-title">Stems</span>
+            <span class="drop-hint" data-i18n="drop.master_hint"></span>
+          </div>
+          <p class="drop-blurb" data-i18n="drop.stems_blurb"></p>
+        </div>
+        <div class="drop-card drop-card-wide" data-drop="match">
+          <p class="drop-tag" data-i18n="drop.match_tag"></p>
+          <div class="drop-zones-row">
+            <div class="drop-zone drop-zone-half" data-match-slot="target">
+              <span class="drop-icon ico ico-match" aria-hidden="true"></span>
+              <span class="drop-title" data-i18n="drop.match_target"></span>
+              <span class="drop-hint" data-i18n="drop.match_target_hint"></span>
+            </div>
+            <div class="drop-zone drop-zone-half drop-zone-dim" data-match-slot="reference">
+              <span class="drop-title" data-i18n="drop.match_ref"></span>
+              <span class="drop-hint" data-i18n="drop.match_ref_hint"></span>
+            </div>
+          </div>
+          <p class="drop-blurb" data-i18n="drop.match_blurb"></p>
+        </div>
+        <div class="drop-card" data-drop="lyrics">
+          <p class="drop-tag" data-i18n="drop.lyrics_tag"></p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-lyrics" aria-hidden="true"></span>
+            <span class="drop-title">Lyrics</span>
+            <span class="drop-hint" data-i18n="drop.master_hint"></span>
+          </div>
+          <p class="drop-blurb" data-i18n="drop.lyrics_blurb"></p>
+        </div>
+        <div class="drop-card drop-card-silence" data-drop="silence">
+          <p class="drop-tag" data-i18n="drop.silence_tag"></p>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-silence" aria-hidden="true"></span>
+            <span class="drop-title" data-i18n="drop.silence_name"></span>
+            <span class="drop-hint" data-i18n="drop.silence_hint"></span>
+          </div>
+          <p class="drop-blurb" data-i18n="drop.silence_blurb"></p>
+        </div>
+        <div class="drop-card drop-card-wide" data-drop="enhance">
+          <p class="drop-tag" data-i18n="drop.enhance_tag"></p>
+          <div class="enhance-modes" role="group" data-i18n-aria="drop.enhance_aria">
+            <label class="mode-pill"><input type="radio" name="enhance-mode" value="light" checked><span data-i18n="drop.enhance_light"></span><small>ffmpeg</small></label>
+            <label class="mode-pill"><input type="radio" name="enhance-mode" value="medium"><span data-i18n="drop.enhance_medium"></span><small>AI</small></label>
+            <label class="mode-pill"><input type="radio" name="enhance-mode" value="heavy"><span data-i18n="drop.enhance_heavy"></span><small>ComfyUI</small></label>
+          </div>
+          <div class="drop-zone">
+            <span class="drop-icon ico ico-enhance" aria-hidden="true"></span>
+            <span class="drop-title">Enhance</span>
+            <span class="drop-hint" data-i18n="drop.enhance_hint"></span>
+          </div>
+          <p class="drop-blurb" data-i18n="drop.enhance_blurb"></p>
+        </div>
+      </div>
+      <div class="drop-actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-action="comfy_outputs" data-i18n="drop.btn.comfy"></button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="ace_outputs" data-i18n="drop.btn.ace"></button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="outputs">Toolkit Outputs</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="references">References</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-label"><span class="num">2</span> <span data-i18n="section.folders"></span></h2>
+      <div class="grid grid-sm">
+        <button type="button" class="card card-comfy-out" data-action="comfy_outputs">
+          <span class="card-icon ico ico-comfy" aria-hidden="true"></span>
+          <span class="card-name">Comfy output</span>
+          <span class="card-desc" data-i18n="folder.comfy_desc"></span>
+        </button>
+        <button type="button" class="card" data-action="outputs">
+          <span class="card-icon ico ico-folder" aria-hidden="true"></span>
+          <span class="card-name">Outputs</span>
+        </button>
+        <button type="button" class="card" data-action="references">
+          <span class="card-icon ico ico-folder-ref" aria-hidden="true"></span>
+          <span class="card-name">References</span>
+        </button>
+        <button type="button" class="card card-ace-out" data-action="ace_outputs">
+          <span class="card-icon ico ico-music" aria-hidden="true"></span>
+          <span class="card-name" data-i18n="launch.ace_tracks"></span>
+          <span class="card-desc" data-i18n="folder.ace_desc"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="soon">
+      <h2 class="section-label"><span class="num">3</span> <span data-i18n="section.soon"></span></h2>
+      <div class="grid">
+        <div class="card disabled"><span class="card-name">Voice-Swap (RVC)</span></div>
+        <div class="card disabled"><span class="card-name">Cover (Gemini)</span></div>
+        <div class="card disabled"><span class="card-name">MV (Remotion)</span></div>
+      </div>
+    </section>
+
+    <footer>
+      <span data-i18n="footer.hw"></span>
+      <button type="button" class="linkish" data-action="readme">README</button>
+    </footer>
+  </div>
+
+  <div class="gallery-modal" id="gallery-modal" hidden aria-hidden="true">
+    <div class="gallery-modal-backdrop" data-close-gallery aria-hidden="true"></div>
+    <div class="gallery-modal-panel" role="dialog" aria-modal="true" aria-labelledby="gallery-modal-title">
+      <button type="button" class="gallery-modal-close" id="gallery-modal-close" data-i18n-aria="gallery.close">&times;</button>
+      <div class="gallery-head">
+        <h2 class="section-label gallery-title" id="gallery-modal-title"><span class="num">G</span> <span data-i18n="gallery.title"></span></h2>
+        <p class="gallery-meta" id="gallery-meta" data-i18n="gallery.loading"></p>
+        <div class="gallery-toolbar">
+          <button type="button" class="btn btn-ghost btn-sm" data-action="comfy_outputs" data-i18n="gallery.folder_output"></button>
+          <button type="button" class="btn btn-ghost btn-sm" id="gallery-refresh" data-i18n="gallery.refresh"></button>
+        </div>
+      </div>
+      <nav class="gallery-browse" id="gallery-browse" data-i18n-aria="gallery.browse_aria"></nav>
+      <div class="gallery-folders" id="gallery-folders" hidden></div>
+      <div class="gallery-grid" id="gallery-grid" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="gallery-lightbox" id="gallery-lightbox" hidden aria-hidden="true">
+    <button type="button" class="gallery-lb-close" id="gallery-lb-close" data-i18n-aria="gallery.lb_close">&times;</button>
+    <button type="button" class="gallery-lb-nav gallery-lb-prev" id="gallery-lb-prev" data-i18n-aria="gallery.lb_prev">&#8249;</button>
+    <button type="button" class="gallery-lb-nav gallery-lb-next" id="gallery-lb-next" data-i18n-aria="gallery.lb_next">&#8250;</button>
+    <p class="gallery-lb-loading" id="gallery-lb-loading" hidden data-i18n="gallery.lb_loading"></p>
+    <figure class="gallery-lb-figure">
+      <img id="gallery-lb-img" alt="" decoding="async" />
+      <figcaption id="gallery-lb-cap"></figcaption>
+    </figure>
+    <a class="gallery-lb-open" id="gallery-lb-open" href="#" target="_blank" rel="noopener" data-i18n="gallery.lb_open"></a>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/i18n.js?v=21"></script>
+  <script src="/app.js?v=21"></script>
+</body>
+</html>

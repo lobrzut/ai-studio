@@ -1,107 +1,73 @@
-# AI Studio Portable (Local)
+# AI Studio
 
-> **Edition: Local** — Windows, single-folder, runs on `127.0.0.1`.  
-> A separate **server** edition is planned (new repo); this project stays the portable desktop reference.
+One project, two platform editions — **Windows** (portable desktop) and **Linux** (Debian server).
 
-Portable local AI studio for image/video workflows and music generation:
-- `ComfyUI` for visual workflows (image/video)
-- `ACE-Step` for music generation
-- `Toolkit` dashboard and audio post-production utilities
+Shared dashboard UI and hub API; platform-specific installers and runtimes.
 
-This project is designed to run **locally on Windows** from a single folder (no cloud dependency).
+## Quick start
 
-See [`docs/PROJECT.md`](docs/PROJECT.md) for Local vs planned Server edition.
-## Quick Start
+### Windows
 
-| File | What it does |
-|------|---------------|
-| `Install.bat` | First-time setup (GPU profile, Python runtime, dependencies, optional Enhance AI) |
-| `Start.bat` | Starts dashboard tray/hub and local services |
-| `Stop.bat` | Stops running services |
-| `Restart.bat` | Full stop + start cycle |
-| `Open-Dashboard.bat` | Opens dashboard hub at `http://127.0.0.1:7880/` |
+From repo root (or after clone):
 
-## Main Components
+| File | Action |
+|------|--------|
+| `Install.bat` | First-time setup (ComfyUI + ACE-Step + Toolkit) |
+| `Start.bat` | Tray + dashboard `:7880` |
+| `Stop.bat` | Stop stack |
+| `Open-Dashboard.bat` | Open `http://127.0.0.1:7880/` |
 
-```
-AIStudio-Portable/
-├── Install.bat / Start.bat / Stop.bat
-├── ComfyUI/      ComfyUI runtime and custom nodes
-├── ACE-Step/     ACE-Step runtime and app
-├── Toolkit/      Dashboard UI + helper scripts
-├── logs/         Runtime logs (local only)
-└── Audit.ps1     Local health/audit script
+Implementation lives in `windows/` (ComfyUI, ACE-Step, Toolkit, PowerShell).
+
+### Linux (one command)
+
+On Debian / Ubuntu:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lobrzut/ai-studio/main/linux/bootstrap.sh | sudo bash
 ```
 
-## Typical Workflow
+Installs to `/opt/ai-studio` by default. Scripts in `linux/`.
 
-1. Run `Install.bat` (first machine setup only).
-2. Run `Start.bat`.
-3. Open `http://127.0.0.1:7880/`.
-4. Launch ComfyUI / ACE-Step from the dashboard.
+## Repository layout
 
-## Ports
-
-- `7870` — ACE-Step
-- `7871` — ComfyUI
-- `7880` — Dashboard hub
-
-## Languages (PL / EN)
-
-The dashboard, tray menu, and main stack scripts (`Install.ps1`, `Start.ps1`, `Stop.ps1`) support **Polish** and **English**.
-
-- Switch language in the dashboard header (**PL** / **EN** buttons).
-- Or use **Language** entries in the tray context menu.
-- Preference is stored in `Toolkit/locale.env` (local, not committed).
-
-## Dashboard Preview
-
-### Home
-
-![Dashboard Home](docs/screenshots/dashboard-home.png)
-
-### Gallery Modal
-
-![Dashboard Gallery](docs/screenshots/dashboard-gallery.png)
-
-### Lightbox Preview
-
-![Dashboard Lightbox](docs/screenshots/dashboard-lightbox.png)
-
-## Important Notes
-
-- This repo should not include local runtime artifacts (logs, outputs, model weights, embedded Python folders).
-- See `.gitignore` for the recommended exclusion list before publishing.
-- Hardware profile files (`gpu_profile.env`, `gpu-idle.env`, `locale.env`) are machine-specific and should stay local.
-
-## Security / Publishing
-
-Before pushing to GitHub:
-
-1. Review `SECURITY_AUDIT.md`.
-2. Verify no local secrets or personal paths are staged.
-3. Commit only source scripts/config/docs needed for reproducible setup.
-
-### First commit helper
-
-Create the first safe commit with:
-
-```powershell
-.\Publish-First-Commit.ps1
+```
+ai-studio/
+├── Install.bat / Start.bat / …     # Windows entrypoints (wrappers)
+├── shared/
+│   ├── web/                        # Dashboard (PL/EN), i18n, gallery UI
+│   └── hub/                        # Hub API (Python — Linux Docker / optional)
+├── windows/                        # Windows portable stack
+│   ├── ComfyUI/
+│   ├── ACE-Step/
+│   └── Toolkit/
+├── linux/                          # Linux bootstrap, Docker, systemd
+└── docs/
 ```
 
-Dry-run (preview staged files anytime):
+## Ports (both editions)
 
-```powershell
-.\Publish-First-Commit.ps1 -DryRun
-```
+| Port | Service |
+|------|---------|
+| 7880 | Dashboard hub |
+| 7871 | ComfyUI |
+| 7870 | ACE-Step |
 
-Then create the GitHub repo and push — see `GITHUB_PUBLISH_CHECKLIST.md`.
+## Languages
 
-To set repository description/topics (requires `gh` CLI):
+Dashboard and scripts: **Polish** and **English** (PL/EN switcher in UI).
 
-```powershell
-.\Publish-GitHub-Profile.ps1 -Repo "your-user/ai-studio-portable"
-```
+## Docs
 
-GitHub copy/paste texts: `docs/github/REPO_ABOUT.md`, `docs/github/WIKI_HOME.md`.
+- [`docs/PROJECT.md`](docs/PROJECT.md) — Windows vs Linux editions
+- [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md) — before publish
+- [`linux/README.md`](linux/README.md) — Linux install details
+
+## Legacy repo names
+
+- `ai-studio-portable` → renamed to **`ai-studio`**
+- `ai-studio-server` → merged into **`linux/`** (archived on GitHub)
+
+## License
+
+See [LICENSE](LICENSE).

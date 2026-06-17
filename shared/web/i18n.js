@@ -3,7 +3,8 @@
   const STR = {
     pl: {
       tagline: 'ComfyUI · grafika & workflow · ACE-Step · muzyka · Toolkit',
-      'edition.local': 'Wersja lokalna · Windows · 127.0.0.1',
+      'edition.windows': 'Windows · portable · 127.0.0.1',
+      'edition.linux': 'Linux · Debian · serwer',
       'btn.start_ai': 'Start AI',
       'btn.start_ai_title': 'Uruchamia ACE + Comfy (dashboard zostaje)',
       'btn.restart': 'Restart',
@@ -148,7 +149,8 @@
     },
     en: {
       tagline: 'ComfyUI · graphics & workflow · ACE-Step · music · Toolkit',
-      'edition.local': 'Local edition · Windows · 127.0.0.1',
+      'edition.windows': 'Windows · portable · 127.0.0.1',
+      'edition.linux': 'Linux · Debian · server',
       'btn.start_ai': 'Start AI',
       'btn.start_ai_title': 'Starts ACE + Comfy (dashboard stays up)',
       'btn.restart': 'Restart',
