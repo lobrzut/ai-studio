@@ -60,6 +60,7 @@ Toolkit/workflows/
 ACE-Step/gpu_profile.env
 ComfyUI/gpu_profile.env
 Toolkit/gpu-idle.env
+Toolkit/locale.env
 .env
 *.env.local
 

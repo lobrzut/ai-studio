@@ -1,6 +1,9 @@
 #Requires -Version 5.1
 # Start/Stop ACE (:7870), Comfy (:7871), hub (:7880). Caly stack zyje tylko gdy dziala tray.
 
+$localePs1 = Join-Path $PSScriptRoot 'Locale.ps1'
+if (Test-Path -LiteralPath $localePs1) { . $localePs1 }
+
 function Get-StudioRoot {
     if ($PSScriptRoot -match 'Toolkit$') { return Split-Path $PSScriptRoot -Parent }
     return $PSScriptRoot
@@ -35,10 +38,10 @@ function Start-StudioService([Parameter(Mandatory)][ValidateSet('Ace', 'Comfy')]
     }
 
     if (-not (Test-PortableReady $cfg.Dir)) {
-        throw "$($cfg.Label) nie zainstalowany. Uruchom Install.bat."
+        throw (L 'svc_not_installed' @($cfg.Label))
     }
     if (Test-StudioPort $cfg.Port) {
-        return "$($cfg.Label) juz dziala (:$($cfg.Port))."
+        return (L 'svc_already_running' @($cfg.Label, $cfg.Port))
     }
 
     $run = Join-Path $cfg.Dir 'Run-Service.ps1'
@@ -57,7 +60,7 @@ function Start-StudioService([Parameter(Mandatory)][ValidateSet('Ace', 'Comfy')]
         -RedirectStandardError $errLog `
         -PassThru
 
-    return "$($cfg.Label) startuje (launcher PID $($p.Id)). Port :$($cfg.Port) za 30-90 s. Log: logs\$($cfg.Log).stderr.log"
+    return (L 'svc_starting' @($cfg.Label, $p.Id, $cfg.Port, $cfg.Log))
 }
 
 function Stop-StudioService([Parameter(Mandatory)][ValidateSet('Ace', 'Comfy')][string]$Name) {
@@ -75,17 +78,17 @@ function Stop-StudioService([Parameter(Mandatory)][ValidateSet('Ace', 'Comfy')][
     Start-Sleep -Seconds 1
 
     if (Test-StudioPort $cfg.Port) {
-        return "$($cfg.Label): port :$($cfg.Port) nadal zajety. Sprobuj Zwolnij GPU (hard) lub restart PC."
+        return (L 'svc_port_busy' @($cfg.Label, $cfg.Port))
     }
-    return "$($cfg.Label) zatrzymany (:$($cfg.Port) wolny)."
+    return (L 'svc_stopped' @($cfg.Label, $cfg.Port))
 }
 
 function Start-StudioServicesBoth {
     $m = @()
     if (-not (Test-StudioPort 7871)) { $m += (Start-StudioService -Name Comfy) }
-    else { $m += 'ComfyUI juz dziala.' }
+    else { $m += (L 'svc_comfy_running') }
     if (-not (Test-StudioPort 7870)) { $m += (Start-StudioService -Name Ace) }
-    else { $m += 'ACE-Step juz dziala.' }
+    else { $m += (L 'svc_ace_running') }
     return ($m -join ' ')
 }
 
@@ -228,19 +231,19 @@ function Repair-OrphanStackBeforeTray {
 function Start-StudioHub {
     $Root    = Get-StudioRoot
     $Toolkit = Join-Path $Root 'Toolkit'
-    if (Test-StudioPort 7880) { return 'Dashboard hub juz dziala (:7880).' }
+    if (Test-StudioPort 7880) { return (L 'hub_already_running') }
     $restart = Join-Path $Toolkit 'Restart-Dashboard.ps1'
     if (-not (Test-Path -LiteralPath $restart)) { throw "Brak $restart" }
     $env:AI_STUDIO_TRAY_OWNER = $PID
     & powershell -NoProfile -ExecutionPolicy Bypass -File $restart | Out-Null
     Remove-Item Env:AI_STUDIO_TRAY_OWNER -ErrorAction SilentlyContinue
-    if (Test-StudioPort 7880) { return 'Dashboard hub uruchomiony (:7880).' }
-    throw 'Dashboard hub nie wstal. Sprawdz logs\dashboard.stderr.log'
+    if (Test-StudioPort 7880) { return (L 'hub_started') }
+    throw (L 'hub_failed')
 }
 
 function Ensure-DashboardHub {
     if (-not (Test-TrayRunning)) {
-        throw 'Brak ikony tray. Uruchom Open-Dashboard.bat lub Start.bat (stack zyje tylko z tray).'
+        throw (L 'hub_no_tray')
     }
     return (Start-StudioHub)
 }

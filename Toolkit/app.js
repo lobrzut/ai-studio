@@ -2,6 +2,7 @@ const API = '';
 const HUB_API_VERSION = 8;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const t = (...a) => (window.I18n ? I18n.t(...a) : a[0]);
 
 const MOTION_MS = 420;
 
@@ -96,13 +97,15 @@ function updateGpuMeter(gpu, hub) {
   if (!gpu || !gpu.available) {
     root.classList.add('unavailable');
     if (nameEl) nameEl.textContent = gpu?.name || 'GPU';
-    if (utilTxt) utilTxt.textContent = 'n/d';
+    if (utilTxt) utilTxt.textContent = t('gpu.nd');
     if (vramText) vramText.textContent = '-- / -- GB';
     setBar(barUtil, 0);
     setBar(barVram, 0);
-    if (stackLine) stackLine.textContent = 'RAM stack -- · CPU --';
+    if (stackLine) stackLine.textContent = t('gpu.stack_ram');
     if (breakdown) breakdown.textContent = '';
-    if (hint) hint.textContent = gpu?.error ? `Brak danych: ${gpu.error}` : 'Czekam na odczyt...';
+    if (hint) {
+      hint.textContent = gpu?.error ? t('gpu.no_data_err', gpu.error) : t('gpu.no_data');
+    }
     return;
   }
 
@@ -115,7 +118,7 @@ function updateGpuMeter(gpu, hub) {
   const st = gpu.stack || {};
 
   if (nameEl) nameEl.textContent = gpu.name || 'GPU';
-  if (utilTxt) utilTxt.textContent = utilAvailable ? `${Math.round(util)}%` : 'n/d';
+  if (utilTxt) utilTxt.textContent = utilAvailable ? `${Math.round(util)}%` : t('gpu.nd');
   if (vramText) vramText.textContent = `${formatGb(usedMb)} / ${formatGb(totalMb)} GB`;
   setBar(barUtil, utilAvailable ? util : 0, 85);
   setBar(barVram, vramPct, 90);
@@ -132,20 +135,20 @@ function updateGpuMeter(gpu, hub) {
     const comfy = st.comfy || {};
     const parts = [];
     if (ace.running) parts.push(`ACE ${formatMb(ace.ram_mb)}`);
-    else parts.push('ACE off');
+    else parts.push(t('gpu.ace_off'));
     if (comfy.running) parts.push(`Comfy ${formatMb(comfy.ram_mb)}`);
-    else parts.push('Comfy off');
+    else parts.push(t('gpu.comfy_off'));
     if (!st.vram_available && (ace.running || comfy.running)) {
-      parts.push('VRAM/proces n/d — patrz pasek VRAM');
+      parts.push(t('gpu.vram_nd'));
     }
     breakdown.textContent = parts.join(' · ');
   }
 
   if (hint) {
     const idle = hub?.gpu_idle_auto
-      ? `auto idle ${hub.gpu_idle_minutes || '?'} min`
-      : 'soft free ~60 s po runie Comfy';
-    hint.textContent = `${st.process_count || 0} proc. · ${idle} · co 5 s`;
+      ? t('gpu.idle_auto', hub.gpu_idle_minutes || '?')
+      : t('gpu.idle_soft');
+    hint.textContent = t('gpu.proc_hint', st.process_count || 0, idle);
   }
 }
 
@@ -169,6 +172,13 @@ function updateSvcChipButtons(s) {
   });
 }
 
+function chipLabelKey(st) {
+  if (st === 'online') return 'chip.online';
+  if (st === 'starting') return 'chip.starting';
+  if (st === 'hung') return 'chip.hung';
+  return 'chip.offline';
+}
+
 function setChip(id, state, url) {
   const el = $(`#chip-${id}`);
   if (!el) return;
@@ -188,13 +198,7 @@ function setChip(id, state, url) {
     el.classList.add('chip-pop');
   }
   const label = el.querySelector('.chip-label');
-  if (label) {
-    label.textContent =
-      st === 'online' ? 'online'
-        : st === 'starting' ? 'laduje...'
-        : st === 'hung' ? 'zawieszony'
-        : 'offline';
-  }
+  if (label) label.textContent = t(chipLabelKey(st));
   const link = el.querySelector('a.chip-link');
   if (link && url) {
     link.href = url;
@@ -202,9 +206,27 @@ function setChip(id, state, url) {
   }
 }
 
+function statusBannerText(s) {
+  const aceSt = s.ace.state || (s.ace.online ? 'online' : 'offline');
+  const comfySt = s.comfy.state || (s.comfy.online ? 'online' : 'offline');
+  const all = aceSt === 'online' && comfySt === 'online';
+  if (comfySt === 'hung') return t('banner.comfy_hung');
+  if (all) return t('banner.all_up');
+  if (aceSt === 'starting' || comfySt === 'starting') return t('banner.starting');
+  if (!aceSt.includes('online') && !comfySt.includes('online') && s.hub?.online) {
+    return t('banner.install_only');
+  }
+  if (comfySt === 'online') return t('banner.comfy_only');
+  if (aceSt === 'online') return t('banner.ace_only');
+  return t('banner.start_stack');
+}
+
 async function refreshStatus() {
   try {
     const s = await fetchStatus();
+    if (s.locale && window.I18n && I18n.getLocale() !== s.locale) {
+      await I18n.setLocale(s.locale, false);
+    }
     setChip('ace', s.ace.state || (s.ace.online ? 'online' : 'offline'), s.ace.url);
     setChip('comfy', s.comfy.state || (s.comfy.online ? 'online' : 'offline'), s.comfy.url);
     setChip('hub', s.hub.online ? 'online' : 'offline', s.hub.url);
@@ -214,12 +236,9 @@ async function refreshStatus() {
     const hubVer = s.hub?.api_version;
     const hubStale = hubVer == null || hubVer < HUB_API_VERSION;
     if (s.hub && !s.hub.upload) {
-      toast('Stary dashboard hub — Restart stack (brak API upload)', true);
+      toast(t('toast.old_hub_upload'), true);
     } else if (hubStale) {
-      toast(
-        `Stary hub (API v${hubVer ?? '?'}). Uruchom Open-Dashboard.bat lub Restart stack — brak Zwolnij GPU / wykrywania zawieszenia.`,
-        true
-      );
+      toast(t('toast.old_hub_api', hubVer ?? '?'), true);
     }
     const banner = $('#status-banner');
     if (banner) {
@@ -227,21 +246,7 @@ async function refreshStatus() {
       const comfySt = s.comfy.state || (s.comfy.online ? 'online' : 'offline');
       const all = aceSt === 'online' && comfySt === 'online';
       const nextClass = 'status-banner ' + (all ? 'all-up' : comfySt === 'hung' ? 'warn' : 'partial');
-      let nextText = 'Uruchom Start stack (Install.bat nie startuje serwerow).';
-      if (comfySt === 'hung') {
-        nextText =
-          'ComfyUI nie odpowiada (moze byc zajety po runie) — poczekaj lub Zwolnij VRAM / Restart Comfy.';
-      } else if (all) {
-        nextText = 'Stack gotowy — ComfyUI i ACE-Step dzialaja.';
-      } else if (aceSt === 'starting' || comfySt === 'starting') {
-        nextText = 'Serwisy startuja (ACE pierwszy raz: 5-15 min). Status odswieza sie co 5 s.';
-      } else if (!aceSt.includes('online') && !comfySt.includes('online') && s.hub?.online) {
-        nextText = 'Install.bat tylko instaluje — kliknij Start stack (nie sam Open-Dashboard).';
-      } else if (comfySt === 'online') {
-        nextText = 'ComfyUI dziala. ACE-Step: uruchom Start stack lub czekaj na model.';
-      } else if (aceSt === 'online') {
-        nextText = 'ACE-Step dziala. Uruchom Start stack dla ComfyUI.';
-      }
+      const nextText = statusBannerText(s);
       withViewTransition(() => {
         banner.className = nextClass;
         banner.textContent = nextText;
@@ -252,8 +257,7 @@ async function refreshStatus() {
     const banner = $('#status-banner');
     if (banner) {
       banner.className = 'status-banner warn';
-      banner.textContent =
-        'Brak polaczenia z hubem :7880. Uruchom Open-Dashboard.bat (nie plik HTML z dysku).';
+      banner.textContent = t('toast.no_hub');
     }
     setChip('hub', 'offline');
   }
@@ -267,7 +271,7 @@ async function runAction(name, btn) {
   try {
     const r = await fetch(`${API}/api/action?name=${encodeURIComponent(name)}`);
     const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'Blad');
+    if (!j.ok) throw new Error(j.error || t('toast.err'));
     toast(j.message || 'OK');
     if (
       /^(start|stop)_(stack|ace|comfy)$/.test(name) ||
@@ -304,16 +308,14 @@ async function uploadFile(kind, file) {
       body: file,
     });
   } catch (e) {
-    throw new Error(
-      `Brak polaczenia z hubem (${e.message}). Otworz http://127.0.0.1:7880/ — nie plik HTML z dysku.`
-    );
+    throw new Error(t('toast.upload_conn', e.message));
   }
   const raw = await r.text();
   let j;
   try {
     j = JSON.parse(raw);
   } catch {
-    throw new Error(`Upload HTTP ${r.status}: ${raw.slice(0, 120) || 'brak odpowiedzi'}`);
+    throw new Error(`Upload HTTP ${r.status}: ${raw.slice(0, 120) || '—'}`);
   }
   if (!j.ok) throw new Error(j.error || `Upload failed (HTTP ${r.status})`);
   return j.path;
@@ -338,11 +340,11 @@ async function runDropApi(body) {
     throw new Error(`Run HTTP ${r.status}: ${raw.slice(0, 120)}`);
   }
   if (!j.ok) throw new Error(j.error || `Run failed (HTTP ${r.status})`);
-  toast(j.message || 'Uruchomiono - sprawdz okno PowerShell');
+  toast(j.message || t('toast.run_ok'));
 }
 
 async function runDrop(kind, file, refFile, opts = {}) {
-  toast(`Wgrywam: ${file.name}...`);
+  toast(t('toast.uploading', file.name));
   const uploadKind = kind === 'match' ? 'match_target' : kind;
   const targetPath = await uploadFile(uploadKind, file);
   let refPath = '';
@@ -367,7 +369,7 @@ function setupDropZones() {
     const onFiles = async (files, slot) => {
       const audio = filterAudio(files);
       if (!audio.length) {
-        toast('Dozwolone: mp3, wav, flac, m4a, opus...', true);
+        toast(t('toast.audio_only'), true);
         return;
       }
       card.classList.add('busy');
@@ -378,14 +380,14 @@ function setupDropZones() {
           } else if (slot === 'reference') {
             const targetPath = card.dataset.targetPath;
             if (!targetPath) {
-              toast('Najpierw upusc utwor (lewa strefa)', true);
+              toast(t('toast.match_first'), true);
               return;
             }
             const refPath = await uploadFile('match_reference', audio[0]);
             await runDropApi({ kind: 'match', path: targetPath, ref: refPath });
           } else {
             card.dataset.targetPath = await uploadFile('match_target', audio[0]);
-            toast(`Target OK: ${audio[0].name} - opcjonalnie upusc referencje`);
+            toast(t('toast.match_target_ok', audio[0].name));
             await runDropApi({ kind: 'match', path: card.dataset.targetPath });
           }
         } else if (kind === 'enhance') {
@@ -427,12 +429,12 @@ function setupDropZones() {
 }
 
 function toast(msg, isErr = false) {
-  const t = $('#toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.className = 'toast show' + (isErr ? ' err' : '');
+  const tEl = $('#toast');
+  if (!tEl) return;
+  tEl.textContent = msg;
+  tEl.className = 'toast show' + (isErr ? ' err' : '');
   clearTimeout(toast._tid);
-  toast._tid = setTimeout(() => t.classList.remove('show'), 4200);
+  toast._tid = setTimeout(() => tEl.classList.remove('show'), 4200);
 }
 
 function escapeHtml(s) {
@@ -477,7 +479,8 @@ function formatGalleryDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString('pl-PL', {
+  const loc = window.I18n ? I18n.dateLocale() : 'pl-PL';
+  return d.toLocaleString(loc, {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -521,7 +524,7 @@ function renderGalleryBrowse(data) {
   foldersEl.hidden = false;
   foldersEl.innerHTML = folders
     .map((f) => {
-      const count = f.count ? `${f.count} plikow` : 'pusty';
+      const count = f.count ? t('gallery.files', f.count) : t('gallery.empty_folder');
       return `<button type="button" class="gallery-folder" data-gallery-folder="${escapeHtml(f.rel)}">
         <span class="gallery-folder-name">${escapeHtml(f.name)}</span>
         <span class="gallery-folder-meta">${escapeHtml(count)}</span>
@@ -547,19 +550,17 @@ function renderGallery(data) {
   const folderCount = (data?.folders || []).length;
   if (meta) {
     if (galleryItems.length) {
-      meta.textContent = `${galleryItems.length} obrazow${folderLabel} · ${root}`;
+      meta.textContent = t('gallery.meta_images', galleryItems.length, folderLabel, root);
     } else if (folderCount) {
-      meta.textContent = `${folderCount} podfolderow${folderLabel} · ${root}`;
+      meta.textContent = t('gallery.meta_subfolders', folderCount, folderLabel, root);
     } else {
-      meta.textContent = `Brak obrazow${folderLabel} — wygeneruj cos w ComfyUI lub wybierz folder`;
+      meta.textContent = t('gallery.meta_none', folderLabel);
     }
   }
 
   if (!galleryItems.length) {
-    const hint = folderCount
-      ? 'Wybierz folder powyzej lub przejdz glebiej.'
-      : 'Brak obrazow PNG/JPG w tym folderze.';
-    grid.innerHTML = `<p class="gallery-empty">${hint}</p>`;
+    const hint = folderCount ? t('gallery.empty_pick') : t('gallery.empty_noimg');
+    grid.innerHTML = `<p class="gallery-empty">${escapeHtml(hint)}</p>`;
     return;
   }
 
@@ -597,11 +598,11 @@ async function loadGallery(folder = galleryFolder, force = false) {
     const data = await r.json();
     if (data?.ok === false) throw new Error(data.error || 'gallery');
     renderGallery(data);
-    if (force) toast('Galeria odswiezona');
+    if (force) toast(t('toast.gallery_refreshed'));
   } catch {
     const meta = $('#gallery-meta');
-    if (meta) meta.textContent = 'Galeria niedostepna — zrestartuj dashboard (Restart-Dashboard.bat)';
-    grid.innerHTML = '<p class="gallery-empty">Nie udalo sie wczytac galerii.</p>';
+    if (meta) meta.textContent = t('toast.gallery_unavailable');
+    grid.innerHTML = `<p class="gallery-empty">${escapeHtml(t('toast.gallery_load_fail'))}</p>`;
     $('#gallery-folders')?.setAttribute('hidden', '');
   } finally {
     grid.classList.remove('gallery-loading');
@@ -621,7 +622,7 @@ function applyLightboxImage(it) {
   const done = (ok = true) => {
     img.classList.remove('is-loading');
     if (loading) loading.hidden = true;
-    if (!ok) toast('Nie udalo sie zaladowac pelnego obrazu', true);
+    if (!ok) toast(t('toast.lb_fail'), true);
   };
 
   img.alt = it.name || '';
@@ -764,7 +765,6 @@ function renderComfyPreviews(data) {
     thumbs.innerHTML = items
       .slice(0, 4)
       .map((it) => {
-        const rel = encodeURIComponent(it.rel);
         const title = escapeHtml(`${it.name} · ${it.rel}`);
         return `<a class="comfy-out-thumb" href="${comfyImgUrl(it.rel)}" target="_blank" rel="noopener" title="${title}" onclick="event.stopPropagation()"><img src="${comfyImgUrl(it.rel)}" alt="" loading="lazy" decoding="async" /></a>`;
       })
@@ -777,7 +777,7 @@ document.addEventListener('click', (e) => {
   if (!btn || btn.classList.contains('disabled')) return;
   e.preventDefault();
   const act = btn.dataset.action;
-  const confirmMsg = btn.dataset.confirm;
+  const confirmMsg = window.I18n ? I18n.confirmKey(btn) : btn.dataset.confirm;
   if (confirmMsg && !window.confirm(confirmMsg)) return;
   if (act === 'open_ace' || act === 'open_comfy') {
     window.open(act === 'open_ace' ? 'http://127.0.0.1:7870/' : 'http://127.0.0.1:7871/', '_blank');
@@ -786,12 +786,22 @@ document.addEventListener('click', (e) => {
   runAction(act, btn);
 });
 
-if (location.protocol === 'file:') {
-  toast('Otworz dashboard przez http://127.0.0.1:7880/ (upload nie dziala z pliku HTML)', true);
+async function boot() {
+  await I18n.init({
+    onChange: () => {
+      refreshStatus();
+      const modal = $('#gallery-modal');
+      if (modal?.classList.contains('is-open')) loadGallery(galleryFolder, false);
+    },
+  });
+  if (location.protocol === 'file:') {
+    toast(t('toast.file_protocol'), true);
+  }
+  initMotion();
+  setupDropZones();
+  initGallery();
+  refreshStatus();
+  setInterval(refreshStatus, 5000);
 }
 
-initMotion();
-setupDropZones();
-initGallery();
-refreshStatus();
-setInterval(refreshStatus, 5000);
+boot();
