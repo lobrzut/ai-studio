@@ -4,11 +4,11 @@ Use this content when creating or editing the repository on GitHub.
 
 ## Repository name
 
-`ai-studio-portable`
+`ai-studio-portable` (Local edition)
 
 ## Description (short, max ~350 chars)
 
-Portable Windows AI studio: ComfyUI workflows, ACE-Step music generation, and a local dashboard hub with audio post-production tools.
+AI Studio Portable (Local): Windows folder-based AI studio — ComfyUI, ACE-Step, dashboard hub, audio post-prod. Server edition planned separately.
 
 ## Website
 
@@ -23,6 +23,7 @@ windows
 portable
 powershell
 local-ai
+local-edition
 audio-processing
 dashboard
 amd-gpu
@@ -31,7 +32,7 @@ rocm
 
 ## About section (long)
 
-AI Studio Portable is a self-contained Windows launcher and dashboard for local creative AI workflows.
+AI Studio Portable (**Local edition**) is a self-contained Windows launcher and dashboard for creative AI workflows on one machine.
 
 It bundles:
 
@@ -48,4 +49,4 @@ Designed for copy-to-USB portability: run `Install.bat` once, then `Start.bat` o
 
 ## Suggested social preview text
 
-**Local AI studio for Windows — ComfyUI + ACE-Step + dashboard hub**
+**AI Studio Portable (Local) — ComfyUI + ACE-Step + dashboard on Windows**

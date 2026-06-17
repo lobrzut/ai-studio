@@ -1,13 +1,16 @@
-# AI Studio Portable
+# AI Studio Portable (Local)
+
+> **Edition: Local** — Windows, single-folder, runs on `127.0.0.1`.  
+> A separate **server** edition is planned (new repo); this project stays the portable desktop reference.
 
 Portable local AI studio for image/video workflows and music generation:
-
 - `ComfyUI` for visual workflows (image/video)
 - `ACE-Step` for music generation
 - `Toolkit` dashboard and audio post-production utilities
 
-This project is designed to run locally on Windows from a single folder.
+This project is designed to run **locally on Windows** from a single folder (no cloud dependency).
 
+See [`docs/PROJECT.md`](docs/PROJECT.md) for Local vs planned Server edition.
 ## Quick Start
 
 | File | What it does |
