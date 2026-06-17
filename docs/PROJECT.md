@@ -40,6 +40,7 @@ curl -fsSL https://raw.githubusercontent.com/lobrzut/ai-studio/main/linux/bootst
 ## GitHub
 
 - Canonical repo: **`lobrzut/ai-studio`**
+- Sibling repos (separate products): [brain](https://github.com/lobrzut/brain) (`:7860`), [netdash](https://github.com/lobrzut/netdash) (`:18787`) — see [HOMELAB-PROJECTS.md](https://github.com/lobrzut/brain/blob/main/docs/HOMELAB-PROJECTS.md)
 - Former `ai-studio-portable` and `ai-studio-server` are consolidated here.
 
 ## Roadmap
