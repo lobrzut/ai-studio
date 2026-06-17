@@ -43,6 +43,14 @@ AIStudio-Portable/
 - `7871` — ComfyUI
 - `7880` — Dashboard hub
 
+## Languages (PL / EN)
+
+The dashboard, tray menu, and main stack scripts (`Install.ps1`, `Start.ps1`, `Stop.ps1`) support **Polish** and **English**.
+
+- Switch language in the dashboard header (**PL** / **EN** buttons).
+- Or use **Language** entries in the tray context menu.
+- Preference is stored in `Toolkit/locale.env` (local, not committed).
+
 ## Dashboard Preview
 
 ### Home
@@ -61,7 +69,7 @@ AIStudio-Portable/
 
 - This repo should not include local runtime artifacts (logs, outputs, model weights, embedded Python folders).
 - See `.gitignore` for the recommended exclusion list before publishing.
-- Hardware profile files (`gpu_profile.env`, `gpu-idle.env`) are machine-specific and should stay local.
+- Hardware profile files (`gpu_profile.env`, `gpu-idle.env`, `locale.env`) are machine-specific and should stay local.
 
 ## Security / Publishing
 

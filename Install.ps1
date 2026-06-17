@@ -27,28 +27,31 @@ $AceDir    = Join-Path $Root 'ACE-Step'
 $ComfyDir  = Join-Path $Root 'ComfyUI'
 $ToolkitDir = Join-Path $Root 'Toolkit'
 
+. (Join-Path $ToolkitDir 'Locale.ps1')
+
 function Write-Step($m) { Write-Host ''; Write-Host "==> $m" -ForegroundColor Cyan }
 function Fail($m)       { Write-Host "ERROR: $m" -ForegroundColor Red; exit 1 }
 
 Write-Host ''
 Write-Host '============================================' -ForegroundColor Cyan
-Write-Host ' AI Studio Portable — instalacja' -ForegroundColor Cyan
+Write-Host ' AI Studio Portable — ' -NoNewline -ForegroundColor Cyan
+Write-Host $(if ((Get-StudioLocale) -eq 'en') { 'installation' } else { 'instalacja' }) -ForegroundColor Cyan
 Write-Host " Folder: $Root" -ForegroundColor Cyan
 Write-Host '============================================' -ForegroundColor Cyan
 
 if (-not $ComfyOnly) {
-    if (-not (Test-Path (Join-Path $AceDir 'Install.ps1'))) { Fail "Brak $AceDir\Install.ps1" }
+    if (-not (Test-Path (Join-Path $AceDir 'Install.ps1'))) { Fail "Missing $AceDir\Install.ps1" }
     Write-Step 'ACE-Step'
     $aceArgs = @('-ExecutionPolicy','Bypass','-File',(Join-Path $AceDir 'Install.ps1'),
         '-GpuVendor',$GpuVendor)
     if ($HsaOverride) { $aceArgs += @('-HsaOverride',$HsaOverride) }
     if ($Force)       { $aceArgs += '-Force' }
     & powershell -NoProfile @aceArgs
-    if ($LASTEXITCODE -ne 0) { Fail 'ACE-Step Install.ps1 nieudany.' }
+    if ($LASTEXITCODE -ne 0) { Fail (L 'install_ace_fail') }
 }
 
 if (-not $AceOnly) {
-    if (-not (Test-Path (Join-Path $ComfyDir 'Install.ps1'))) { Fail "Brak $ComfyDir\Install.ps1" }
+    if (-not (Test-Path (Join-Path $ComfyDir 'Install.ps1'))) { Fail "Missing $ComfyDir\Install.ps1" }
     Write-Step 'ComfyUI (+ ComfyUI-Manager)'
     $comfyArgs = @('-ExecutionPolicy','Bypass','-File',(Join-Path $ComfyDir 'Install.ps1'),
         '-GpuVendor',$GpuVendor)
@@ -56,14 +59,14 @@ if (-not $AceOnly) {
     if ($Force)       { $comfyArgs += '-Force' }
     if ($SkipModel)   { $comfyArgs += '-SkipModel' }
     & powershell -NoProfile @comfyArgs
-    if ($LASTEXITCODE -ne 0) { Fail 'ComfyUI Install.ps1 nieudany.' }
+    if ($LASTEXITCODE -ne 0) { Fail (L 'install_comfy_fail') }
 }
 
 # Synchronizuj profil GPU (ACE jako zrodlo prawdy)
 $aceProfile = Join-Path $AceDir 'gpu_profile.env'
 if (Test-Path $aceProfile) {
     Copy-Item -LiteralPath $aceProfile -Destination (Join-Path $ComfyDir 'gpu_profile.env') -Force
-    Write-Step 'Profil GPU zsynchronizowany do ComfyUI'
+    Write-Step (L 'install_gpu_sync')
 }
 
 # Studio: foldery wyjsc
@@ -85,37 +88,37 @@ if (-not $ComfyOnly -and -not $SkipEnhanceAI) {
         if ($Force) { $enhArgs += '-Force' }
         & powershell -NoProfile @enhArgs
         if ($LASTEXITCODE -ne 0) {
-            Write-Host 'UWAGA: Enhance AI nie zainstalowany — sredni tryb Enhance niedostepny do czasu naprawy pip.' -ForegroundColor Yellow
+            Write-Host (L 'install_enhance_warn') -ForegroundColor Yellow
         }
     }
 }
 
 Write-Host ''
 Write-Host '============================================' -ForegroundColor Green
-Write-Host ' INSTALACJA ZAKONCZONA' -ForegroundColor Green
+Write-Host (' ' + (L 'install_done')) -ForegroundColor Green
 Write-Host '============================================' -ForegroundColor Green
 Write-Host ''
-Write-Host ' Install.bat NIE uruchamia ACE-Step ani ComfyUI.' -ForegroundColor Yellow
-Write-Host ' Serwery startuje dopiero:  Start.bat' -ForegroundColor Yellow
-Write-Host ' Pierwszy Start moze trwac 5-15 min (ladowanie modeli na GPU).' -ForegroundColor Gray
+Write-Host (L 'install_no_servers') -ForegroundColor Yellow
+Write-Host (L 'install_use_start') -ForegroundColor Yellow
+Write-Host (L 'install_first_start') -ForegroundColor Gray
 Write-Host ''
 
 if (-not $NoAutoStart -and -not $AceOnly -and -not $ComfyOnly) {
     $startPs1 = Join-Path $Root 'Start.ps1'
     if (Test-Path -LiteralPath $startPs1) {
-        $ans = Read-Host 'Uruchomic Start.bat teraz? (T = tak / N = pozniej)'
-        if ($ans -match '^[tTyY]') {
+        $ans = Read-Host (L 'install_run_start')
+        if ($ans -match '^[yYtT]') {
             Write-Step 'Start stack (ACE + Comfy + dashboard)'
             & powershell -NoProfile -ExecutionPolicy Bypass -File $startPs1
             if ($LASTEXITCODE -eq 2) {
-                Write-Host 'Start niekompletny — sprawdz logs\ (modele moga jeszcze ladowac).' -ForegroundColor Yellow
+                Write-Host (L 'install_start_incomplete') -ForegroundColor Yellow
             }
         }
     }
 }
 
 Write-Host ''
-Write-Host ' Adresy po Start.bat:' -ForegroundColor Green
+Write-Host (' ' + (L 'install_addresses')) -ForegroundColor Green
 Write-Host '  ACE-Step:  http://127.0.0.1:7870' -ForegroundColor Green
 Write-Host '  ComfyUI:   http://127.0.0.1:7871' -ForegroundColor Green
 Write-Host '  Dashboard: http://127.0.0.1:7880/' -ForegroundColor Green

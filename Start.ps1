@@ -64,11 +64,11 @@ function Ensure-Installed {
 
     if (-not $needAce -and -not $needComfy) { return }
 
-    Write-Step 'Pierwsze uruchomienie — Install.ps1 (moze potrwac)...'
+    Write-Step (L 'start_first_run')
 
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Root 'Install.ps1')
 
-    if ($LASTEXITCODE -ne 0) { throw 'Install.ps1 nieudany.' }
+    if ($LASTEXITCODE -ne 0) { throw (L 'start_install_fail') }
 
 }
 
@@ -78,7 +78,7 @@ Write-Host ''
 
 Write-Host '============================================' -ForegroundColor Cyan
 
-Write-Host ' AI Studio Portable - Dashboard' -ForegroundColor Cyan
+Write-Host (' ' + (L 'start_title')) -ForegroundColor Cyan
 
 Write-Host " Folder: $Root" -ForegroundColor Cyan
 
@@ -93,9 +93,9 @@ if (Test-Path -LiteralPath $ensureIco) {
     & powershell -NoProfile -ExecutionPolicy Bypass -File $ensureIco | Out-Null
 }
 
-if (-not (Test-PortableReady $AceDir))   { throw "ACE-Step nie gotowy. Uruchom Install.bat." }
+if (-not (Test-PortableReady $AceDir))   { throw (L 'start_ace_not_ready') }
 
-if (-not (Test-PortableReady $ComfyDir)) { throw "ComfyUI nie gotowy. Uruchom Install.bat." }
+if (-not (Test-PortableReady $ComfyDir)) { throw (L 'start_comfy_not_ready') }
 
 
 
@@ -104,13 +104,13 @@ $hubUrl = 'http://127.0.0.1:7880/'
 
 
 if (Test-TrayHealthy) {
-    Write-Host 'Dashboard juz dziala (ikona tray przy zegarze).' -ForegroundColor Yellow
+    Write-Host (L 'start_already_running') -ForegroundColor Yellow
     if (-not $NoBrowser) { Start-Process $hubUrl }
     exit 0
 }
 
 if (Test-TrayRunning -and -not (Test-TrayHealthy)) {
-    Write-Host 'Tray uszkodzony (stary lock) — restart...' -ForegroundColor Yellow
+    Write-Host (L 'start_tray_broken') -ForegroundColor Yellow
     Stop-TrayHost
     Stop-StudioAll
     Start-Sleep -Seconds 2
@@ -142,25 +142,25 @@ while ((Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 800
 }
 if (-not $trayOk) {
-    Write-Host 'WARN: Tray nie potwierdzil startu w 20 s — sprawdz logs\tray.log' -ForegroundColor Yellow
-    Write-Host '      Sprobuj: Stop.bat, potem Start.bat. Ikona moze byc w ukrytych przy zegarze.' -ForegroundColor Yellow
+    Write-Host (L 'start_tray_timeout') -ForegroundColor Yellow
+    Write-Host (L 'start_tray_hint') -ForegroundColor Yellow
 }
 
 
 
 Write-Host ''
 
-Write-Host 'OK: Dashboard uruchomiony (tray + http://127.0.0.1:7880/)' -ForegroundColor Green
+Write-Host (L 'start_ok') -ForegroundColor Green
 
-Write-Host '     ACE/Comfy: Start z dashboardu lub menu tray.' -ForegroundColor Gray
+Write-Host (L 'start_ai_hint') -ForegroundColor Gray
 
 if ($WithAi) {
 
-    Write-Host '     AI: auto-start wlaczony (-WithAi).' -ForegroundColor Gray
+    Write-Host (L 'start_with_ai') -ForegroundColor Gray
 
 }
 
-Write-Host '     Zamkniecie: tray -> Zamknij AI Studio, lub Stop.bat' -ForegroundColor Gray
+Write-Host (L 'start_close_hint') -ForegroundColor Gray
 
 Write-Host ''
 

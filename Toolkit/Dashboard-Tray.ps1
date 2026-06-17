@@ -109,17 +109,17 @@ function Invoke-LocalAction([string]$name) {
             'stop_stack'  { return (Stop-StudioServicesBoth) }
             'soft_free_vram' {
                 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Toolkit 'Soft-Free-GPU.ps1') -Quiet
-                return 'Soft free VRAM (Comfy)'
+                return (L 'tray_soft_free')
             }
             'force_free_gpu' {
                 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Toolkit 'Force-Free-GPU.ps1') -Quiet
-                return 'Zwolniono GPU (hard)'
+                return (L 'tray_hard_free')
             }
             'restart_hub' { return (Start-StudioHub) }
-            default { throw "Nieznana akcja: $name" }
+            default { throw (L 'err_unknown_action' @($name)) }
         }
     } catch {
-        return "Blad: $($_.Exception.Message)"
+        return (L 'tray_err_action' @($_.Exception.Message))
     }
 }
 
@@ -129,11 +129,7 @@ function Test-SvcOn($state) {
 
 function Format-TrayTip($s) {
     if (-not $s) {
-        return @(
-            'AI Studio Portable'
-            'Hub: offline'
-            'Zamknij tray = caly stack OFF'
-        ) -join "`n"
+        return (L 'tray_tip_offline')
     }
     $gpu = $s.gpu
     $vram = if ($gpu.vram_used_mb) { "{0:N1}/{1:N1} GB VRAM" -f ($gpu.vram_used_mb/1024), ($gpu.vram_total_mb/1024) } else { 'VRAM: ?' }
@@ -144,7 +140,7 @@ function Format-TrayTip($s) {
         "Stack RAM {0} MB | VRAM {1} | CPU {2}" -f $st.ram_mb, $rv, $(if($st.cpu_pct -ne $null){"$($st.cpu_pct)%"}else{'?'})
     } else { '' }
     $lines = @(
-        'AI Studio Portable (tray ON)'
+        (L 'tray_tip_online')
         "ACE: $($s.ace.state)  |  Comfy: $($s.comfy.state)"
         "$util  |  $vram"
         $stackLine
@@ -183,28 +179,28 @@ Write-TrayLog 'NotifyIcon Visible=true'
 
 if (Test-StudioPort 7880) {
     $script:HubReady = $true
-    $hubMsg = 'Dashboard hub juz dziala (:7880).'
+    $hubMsg = (L 'tray_hub_running')
     Write-TrayLog $hubMsg
 } else {
-    $hubMsg = 'Uruchamiam dashboard hub...'
+    $hubMsg = (L 'tray_starting_hub')
     Write-TrayLog $hubMsg
     try { Start-HubInBackground } catch {
-        $hubMsg = "Hub start blad: $($_.Exception.Message)"
+        $hubMsg = (L 'tray_hub_start_err' @($_.Exception.Message))
         Write-TrayLog $hubMsg
     }
 }
 
 $menu = New-Object System.Windows.Forms.ContextMenuStrip
 
-$mOpen = $menu.Items.Add('Otworz dashboard')
+$mOpen = $menu.Items.Add((L 'tray_open_dashboard'))
 $mOpen.Add_Click({ Start-Process $script:HubUrl })
 
 $menu.Items.Add('-') | Out-Null
 
-$mStartAce = $menu.Items.Add('Start ACE-Step')
-$mStopAce = $menu.Items.Add('Stop ACE-Step')
-$mStartComfy = $menu.Items.Add('Start ComfyUI')
-$mStopComfy = $menu.Items.Add('Stop ComfyUI')
+$mStartAce = $menu.Items.Add((L 'tray_start_ace'))
+$mStopAce = $menu.Items.Add((L 'tray_stop_ace'))
+$mStartComfy = $menu.Items.Add((L 'tray_start_comfy'))
+$mStopComfy = $menu.Items.Add((L 'tray_stop_comfy'))
 $mStartAce.Add_Click({ Show-Balloon $script:notify 'ACE' (Invoke-HubAction 'start_ace') })
 $mStopAce.Add_Click({ Show-Balloon $script:notify 'ACE' (Invoke-HubAction 'stop_ace') })
 $mStartComfy.Add_Click({ Show-Balloon $script:notify 'Comfy' (Invoke-HubAction 'start_comfy') })
@@ -212,19 +208,19 @@ $mStopComfy.Add_Click({ Show-Balloon $script:notify 'Comfy' (Invoke-HubAction 's
 
 $menu.Items.Add('-') | Out-Null
 
-$mStartAi = $menu.Items.Add('Start AI (oba)')
-$mStopAi = $menu.Items.Add('Stop AI (oba)')
+$mStartAi = $menu.Items.Add((L 'tray_start_both'))
+$mStopAi = $menu.Items.Add((L 'tray_stop_both'))
 $mStartAi.Add_Click({ Show-Balloon $script:notify 'Stack' (Invoke-HubAction 'start_stack') })
 $mStopAi.Add_Click({ Show-Balloon $script:notify 'Stack' (Invoke-HubAction 'stop_stack') })
 
 $menu.Items.Add('-') | Out-Null
 
-$mSoft = $menu.Items.Add('Zwolnij VRAM (soft, Comfy)')
-$mHard = $menu.Items.Add('Zwolnij GPU (hard)')
+$mSoft = $menu.Items.Add((L 'tray_soft_vram'))
+$mHard = $menu.Items.Add((L 'tray_hard_gpu'))
 $mSoft.Add_Click({ Show-Balloon $script:notify 'VRAM' (Invoke-HubAction 'soft_free_vram') })
 $mHard.Add_Click({
     $r = [Windows.Forms.MessageBox]::Show(
-        'Zatrzymac ComfyUI i ACE-Step i zwolnic VRAM?',
+        (L 'tray_confirm_hard'),
         'AI Studio',
         [Windows.Forms.MessageBoxButtons]::YesNo,
         [Windows.Forms.MessageBoxIcon]::Warning
@@ -234,18 +230,33 @@ $mHard.Add_Click({
 
 $menu.Items.Add('-') | Out-Null
 
-$mStatus = $menu.Items.Add('Pokaz status...')
+$mLangPl = $menu.Items.Add((L 'tray_lang_pl'))
+$mLangEn = $menu.Items.Add((L 'tray_lang_en'))
+$mLangPl.Add_Click({
+    Set-StudioLocale 'pl'
+    Update-TrayMenuTexts
+    Show-Balloon $script:notify 'PL' (L 'tray_lang_pl')
+})
+$mLangEn.Add_Click({
+    Set-StudioLocale 'en'
+    Update-TrayMenuTexts
+    Show-Balloon $script:notify 'EN' (L 'tray_lang_en')
+})
+
+$menu.Items.Add('-') | Out-Null
+
+$mStatus = $menu.Items.Add((L 'tray_show_status'))
 $mStatus.Add_Click({
     $s = if ($script:LastStatus) { $script:LastStatus } else { Get-HubStatus }
     [Windows.Forms.MessageBox]::Show(
         (Format-TrayTip $s),
-        'AI Studio - status',
+        (L 'tray_status_title'),
         [Windows.Forms.MessageBoxButtons]::OK,
         [Windows.Forms.MessageBoxIcon]::Information
     ) | Out-Null
 })
 
-$mHub = $menu.Items.Add('Restart dashboard hub')
+$mHub = $menu.Items.Add((L 'tray_restart_hub'))
 $mHub.Add_Click({
     Stop-DashboardHub
     Start-Sleep -Seconds 2
@@ -255,16 +266,33 @@ $mHub.Add_Click({
 
 $menu.Items.Add('-') | Out-Null
 
-$mExit = $menu.Items.Add('Zamknij AI Studio (wszystko)')
+$mExit = $menu.Items.Add((L 'tray_exit'))
 $mExit.Add_Click({
     $r = [Windows.Forms.MessageBox]::Show(
-        'Zatrzymac hub, ACE, Comfy i zamknac ikone tray?',
+        (L 'tray_confirm_exit'),
         'AI Studio',
         [Windows.Forms.MessageBoxButtons]::YesNo,
         [Windows.Forms.MessageBoxIcon]::Question
     )
     if ($r -eq 'Yes') { Exit-StudioTray }
 })
+
+function Update-TrayMenuTexts {
+    $mOpen.Text = L 'tray_open_dashboard'
+    $mStartAce.Text = L 'tray_start_ace'
+    $mStopAce.Text = L 'tray_stop_ace'
+    $mStartComfy.Text = L 'tray_start_comfy'
+    $mStopComfy.Text = L 'tray_stop_comfy'
+    $mStartAi.Text = L 'tray_start_both'
+    $mStopAi.Text = L 'tray_stop_both'
+    $mSoft.Text = L 'tray_soft_vram'
+    $mHard.Text = L 'tray_hard_gpu'
+    $mLangPl.Text = L 'tray_lang_pl'
+    $mLangEn.Text = L 'tray_lang_en'
+    $mStatus.Text = L 'tray_show_status'
+    $mHub.Text = L 'tray_restart_hub'
+    $mExit.Text = L 'tray_exit'
+}
 
 $notify.ContextMenuStrip = $menu
 
@@ -298,7 +326,7 @@ function Complete-TrayBoot {
     $script:BootDone = $true
     $script:HubReady = $true
     Write-TrayLog 'Hub port 7880 OK'
-    Show-Balloon $script:notify 'AI Studio' 'Dashboard gotowy: http://127.0.0.1:7880/' 3500
+    Show-Balloon $script:notify 'AI Studio' (L 'tray_boot_ready') 3500
     if ($script:AutoStartAiPending) {
         $script:AutoStartAiPending = $false
         Show-Balloon $script:notify 'Start' (Invoke-HubAction 'start_stack') 3000
@@ -322,9 +350,9 @@ if (Test-StudioPort 7880) { Complete-TrayBoot }
 
 Show-Balloon $notify 'AI Studio' @(
     $hubMsg
-    'Ikona przy zegarze (zolte A).'
-    'Jesli jej nie widzisz: strzalka ^ przy zegarze -> Ikony zasobnika.'
-    'Zamknij tray = caly stack OFF.'
+    (L 'tray_balloon_icon')
+    (L 'tray_balloon_hidden')
+    (L 'tray_tip_close')
 ) -join "`n" 6000
 
 $hiddenForm = New-Object System.Windows.Forms.Form
@@ -344,7 +372,7 @@ try {
 } catch {
     Write-TrayLog "Run error: $($_.Exception.Message)"
     [Windows.Forms.MessageBox]::Show(
-        "Tray nie moze wystartowac:`n$($_.Exception.Message)`n`nLog: logs\tray.log",
+        (L 'tray_err_start' @($_.Exception.Message)),
         'AI Studio',
         [Windows.Forms.MessageBoxButtons]::OK,
         [Windows.Forms.MessageBoxIcon]::Error

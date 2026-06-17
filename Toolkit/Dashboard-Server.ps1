@@ -12,6 +12,7 @@ $HubApiVersion = 8
 
 . (Join-Path $Toolkit 'Get-GpuStats.ps1')
 . (Join-Path $Toolkit 'Service-Control.ps1')
+. (Join-Path $Toolkit 'Locale.ps1')
 
 $script:GpuIdleAuto = $false
 $script:GpuIdleIntervalSec = 180
@@ -261,7 +262,8 @@ function Get-ServiceStatus {
             url         = "http://127.0.0.1:$Port/"
             api_version = $HubApiVersion
             upload      = $true
-            features    = @('force_free_gpu', 'soft_free_vram', 'comfy_hung', 'gpu_meter', 'gpu_idle_auto', 'service_toggle', 'comfy_outputs')
+            locale      = (Get-StudioLocale)
+            features    = @('force_free_gpu', 'soft_free_vram', 'comfy_hung', 'gpu_meter', 'gpu_idle_auto', 'service_toggle', 'comfy_outputs', 'i18n')
             gpu_idle_auto = $script:GpuIdleAuto
             gpu_idle_minutes = [math]::Round($script:GpuIdleIntervalSec / 60, 1)
         }
@@ -279,6 +281,7 @@ function Get-ServiceStatus {
             hub   = @{
                 online = $true; port = $Port; url = "http://127.0.0.1:$Port/"
                 api_version = $HubApiVersion; upload = $true
+                locale = (Get-StudioLocale)
                 gpu_idle_auto = $script:GpuIdleAuto
                 gpu_idle_minutes = [math]::Round($script:GpuIdleIntervalSec / 60, 1)
             }
@@ -683,18 +686,16 @@ function Invoke-DropProcess([string]$kind, [string]$filePath, [string]$refPath) 
     }
     Launch-DropJob $kind $filePath $refPath $mode
     switch ($kind) {
-        'master' { return "Master: $(Split-Path $filePath -Leaf)" }
-        'stems'  { return "Stems (Demucs): $(Split-Path $filePath -Leaf)" }
-        'lyrics' { return "Lyrics (Whisper): $(Split-Path $filePath -Leaf)" }
+        'master' { return (L 'drop_master' @((Split-Path $filePath -Leaf))) }
+        'stems'  { return (L 'drop_stems' @((Split-Path $filePath -Leaf))) }
+        'lyrics' { return (L 'drop_lyrics' @((Split-Path $filePath -Leaf))) }
         'match' {
-            $msg = "Match: $(Split-Path $filePath -Leaf)"
-            if ($refPath) { $msg += " vs $(Split-Path $refPath -Leaf)" }
-            else { $msg += ' (referencja z References\)' }
-            return $msg
+            if ($refPath) { return (L 'drop_match_ref' @((Split-Path $filePath -Leaf), (Split-Path $refPath -Leaf))) }
+            return (L 'drop_match_refs_folder' @((Split-Path $filePath -Leaf)))
         }
-        'enhance' { return "Enhance ($mode): $(Split-Path $filePath -Leaf)" }
-        'silence' { return "Napraw cisze: $(Split-Path $filePath -Leaf)" }
-        default { throw "Nieznany drop: $kind" }
+        'enhance' { return (L 'drop_enhance' @($mode, (Split-Path $filePath -Leaf))) }
+        'silence' { return (L 'drop_silence' @((Split-Path $filePath -Leaf))) }
+        default { throw (L 'err_unknown_drop' @($kind)) }
     }
 }
 
@@ -719,9 +720,9 @@ function Invoke-Action([string]$name) {
             Start-Process -FilePath 'powershell.exe' -ArgumentList @(
                 '-NoProfile','-ExecutionPolicy','Bypass','-WindowStyle','Minimized','-File',$restart
             ) -WorkingDirectory $Root
-            return 'Restart: Stop + Start (~30-90 s). Odswiez strone za chwile.'
+            return (L 'action_restart_stack')
         }
-        'install'      { Launch-Bat 'Install.bat'; return 'Uruchomiono Install.bat' }
+        'install'      { Launch-Bat 'Install.bat'; return (L 'action_install') }
         'open_ace'     { Start-Process 'http://127.0.0.1:7870/'; return 'ACE-Step' }
         'open_comfy'   { Start-Process 'http://127.0.0.1:7871/'; return 'ComfyUI' }
         'force_free_gpu' {
@@ -733,19 +734,19 @@ function Invoke-Action([string]$name) {
                 '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command',
                 "& { & '$script' -Quiet *>&1 | Tee-Object -FilePath '$log' }"
             ) -WorkingDirectory $Root -WindowStyle Normal -PassThru
-            return 'GPU: stop Comfy + ACE (bez restartu). Okno PS + log logs\force-gpu.last.log'
+            return (L 'action_force_gpu')
         }
         'restart_comfy' {
             $script = Join-Path $Toolkit 'Force-Free-GPU.ps1'
             Start-Process -FilePath 'powershell.exe' -ArgumentList @(
                 '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script, '-RestartComfy', '-Quiet'
             ) -WorkingDirectory $Root -WindowStyle Normal
-            return 'Restart ComfyUI po zwolnieniu GPU (ACE wylaczony).'
+            return (L 'action_restart_comfy')
         }
         'soft_free_vram' {
             $r = Invoke-ComfySoftFreeVram
-            if ($r.ok) { return 'ComfyUI: modele zrzucane z VRAM (serwis zostaje online).' }
-            if ($r.skipped) { throw "ComfyUI zajety: $($r.reason)" }
+            if ($r.ok) { return (L 'action_soft_vram_ok') }
+            if ($r.skipped) { throw (L 'err_comfy_busy' @($r.reason)) }
             throw $r.error
         }
         'gpu_idle_on' {
@@ -755,13 +756,13 @@ function Invoke-Action([string]$name) {
                 'GPU_IDLE_SOFT_FREE=1'
                 "GPU_IDLE_MINUTES=$([math]::Max(1, [int]($script:GpuIdleIntervalSec / 60)))"
             ) | Set-Content -LiteralPath $path -Encoding UTF8
-            return "Auto idle ON: Comfy soft free co $([math]::Round($script:GpuIdleIntervalSec/60,1)) min (gdy kolejka pusta)."
+            return (L 'action_gpu_idle_on' @([math]::Round($script:GpuIdleIntervalSec/60,1)))
         }
         'gpu_idle_off' {
             $script:GpuIdleAuto = $false
             $path = Join-Path $Toolkit 'gpu-idle.env'
             if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
-            return 'Auto idle wylaczone.'
+            return (L 'action_gpu_idle_off')
         }
         'master'       { Launch-Bat 'ACE-Step\Master.bat'; return 'Master.bat' }
         'stems'        { Launch-Bat 'Toolkit\Stems.bat'; return 'Stems.bat' }
@@ -770,15 +771,15 @@ function Invoke-Action([string]$name) {
         'enhance'      { Launch-Bat 'Toolkit\Enhance.bat'; return 'Enhance.bat (light)' }
         'outputs'      { Launch-Explorer 'Toolkit\Outputs'; return 'Outputs' }
         'references'   { Launch-Explorer 'Toolkit\References'; return 'References' }
-        'ace_outputs'  { return ('ACE utwory: ' + (Open-AceOutputs)) }
-        'comfy_outputs' { return ('Comfy output: ' + (Open-ComfyOutputs)) }
-        'raw_outputs'  { return ('ACE utwory: ' + (Open-AceOutputs)) }
+        'ace_outputs'  { return (L 'action_ace_outputs' @((Open-AceOutputs))) }
+        'comfy_outputs' { return (L 'action_comfy_outputs' @((Open-ComfyOutputs))) }
+        'raw_outputs'  { return (L 'action_ace_outputs' @((Open-AceOutputs))) }
         'readme'       {
             $p = Join-Path $Root 'README.md'
             if (Test-Path -LiteralPath $p) { Start-Process -FilePath $p }
             return 'README.md'
         }
-        default        { throw "Nieznana akcja: $name" }
+        default        { throw (L 'err_unknown_action' @($name)) }
     }
 }
 
@@ -834,6 +835,21 @@ try {
                 $ctx.Response.StatusCode = 302
                 $ctx.Response.RedirectLocation = '/favicon.svg'
                 $ctx.Response.Close()
+                continue
+            }
+
+            if ($path -eq '/api/locale') {
+                if ($req.HttpMethod -eq 'POST') {
+                    $lang = $req.QueryString['lang']
+                    if ($lang -in 'pl', 'en') {
+                        Set-StudioLocale $lang
+                        Send-Json $ctx @{ ok = $true; locale = $lang }
+                    } else {
+                        Send-Json $ctx @{ ok = $false; error = 'lang must be pl or en' } 400
+                    }
+                    continue
+                }
+                Send-Json $ctx @{ ok = $true; locale = (Get-StudioLocale) }
                 continue
             }
 
@@ -896,7 +912,7 @@ try {
             if ($path -eq '/api/action') {
                 $action = $req.QueryString['name']
                 if (-not $action) {
-                    Send-Json $ctx @{ ok = $false; error = 'Brak parametru name' } 400
+                    Send-Json $ctx @{ ok = $false; error = (L 'err_missing_name') } 400
                     continue
                 }
                 try {
@@ -916,11 +932,11 @@ try {
                 $kind = $req.QueryString['kind']
                 $name = Get-UploadFileName $req
                 if (-not $kind) {
-                    Send-Json $ctx @{ ok = $false; error = 'Brak parametru kind' } 400
+                    Send-Json $ctx @{ ok = $false; error = (L 'err_missing_kind') } 400
                     continue
                 }
                 if (-not $name) {
-                    Send-Json $ctx @{ ok = $false; error = 'Brak nazwy pliku (name lub naglowek X-File-Name)' } 400
+                    Send-Json $ctx @{ ok = $false; error = (L 'err_missing_filename') } 400
                     continue
                 }
                 try {
