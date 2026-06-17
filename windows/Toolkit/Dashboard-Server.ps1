@@ -6,6 +6,8 @@ $ErrorActionPreference = 'Continue'
 $Port     = 7880
 $Toolkit  = $PSScriptRoot
 $Root     = Split-Path $Toolkit -Parent
+$RepoRoot = Split-Path $Root -Parent
+$WebRoot  = Join-Path $RepoRoot 'shared\web'
 $LogDir   = Join-Path $Root 'logs'
 # Podnies przy zmianach API / UI — klient ostrzeze gdy hub jest stary
 $HubApiVersion = 8
@@ -263,6 +265,7 @@ function Get-ServiceStatus {
             api_version = $HubApiVersion
             upload      = $true
             locale      = (Get-StudioLocale)
+            edition     = 'windows'
             features    = @('force_free_gpu', 'soft_free_vram', 'comfy_hung', 'gpu_meter', 'gpu_idle_auto', 'service_toggle', 'comfy_outputs', 'i18n')
             gpu_idle_auto = $script:GpuIdleAuto
             gpu_idle_minutes = [math]::Round($script:GpuIdleIntervalSec / 60, 1)
@@ -282,6 +285,7 @@ function Get-ServiceStatus {
                 online = $true; port = $Port; url = "http://127.0.0.1:$Port/"
                 api_version = $HubApiVersion; upload = $true
                 locale = (Get-StudioLocale)
+                edition = 'windows'
                 gpu_idle_auto = $script:GpuIdleAuto
                 gpu_idle_minutes = [math]::Round($script:GpuIdleIntervalSec / 60, 1)
             }
@@ -980,17 +984,18 @@ try {
             }
 
             $rel = switch ($path) {
-                '/' { 'Dashboard.html' }
+                '/' { 'index.html' }
                 '/style.css' { 'style.css' }
                 '/motion.css' { 'motion.css' }
                 '/app.js' { 'app.js' }
+                '/i18n.js' { 'i18n.js' }
                 '/favicon.svg' { 'favicon.svg' }
                 default { $null }
             }
 
             if ($rel) {
                 $ext = [IO.Path]::GetExtension($rel)
-                Send-File $ctx (Join-Path $Toolkit $rel) $mime[$ext]
+                Send-File $ctx (Join-Path $WebRoot $rel) $mime[$ext]
                 continue
             }
 

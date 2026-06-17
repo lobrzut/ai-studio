@@ -11,6 +11,7 @@ desktop.ini
 *.swp
 
 # Local logs
+windows/logs/
 logs/
 *.log
 
@@ -32,35 +33,34 @@ __pycache__/
 # -----------------------------------------------------------------------------
 # Portable runtimes (installed locally by Install.bat — do NOT publish)
 # -----------------------------------------------------------------------------
-ACE-Step/python/
-ACE-Step/ffmpeg/
-ACE-Step/PortableGit/
-ACE-Step/models/
-ACE-Step/ACE-Step-1.5/
+windows/ACE-Step/python/
+windows/ACE-Step/ffmpeg/
+windows/ACE-Step/PortableGit/
+windows/ACE-Step/models/
+windows/ACE-Step/ACE-Step-1.5/
 
-ComfyUI/python/
-ComfyUI/ffmpeg/
-ComfyUI/PortableGit/
-ComfyUI/deepspeed_stub/
-ComfyUI/ComfyUI/
+windows/ComfyUI/python/
+windows/ComfyUI/ffmpeg/
+windows/ComfyUI/PortableGit/
+windows/ComfyUI/deepspeed_stub/
+windows/ComfyUI/ComfyUI/
 
-# Heavy model / generated media artifacts
-ComfyUI/ComfyUI/models/
-ComfyUI/ComfyUI/output/
-ComfyUI/ComfyUI/input/
-ComfyUI/ComfyUI/temp/
+windows/ComfyUI/ComfyUI/models/
+windows/ComfyUI/ComfyUI/output/
+windows/ComfyUI/ComfyUI/input/
+windows/ComfyUI/ComfyUI/temp/
 
-# Toolkit generated outputs / job inbox
-Toolkit/Outputs/
-Toolkit/References/
-Toolkit/inbox/
-Toolkit/workflows/
+windows/Toolkit/Outputs/
+windows/Toolkit/References/
+windows/Toolkit/inbox/
+windows/Toolkit/workflows/
 
-# Local machine profiles / env
-ACE-Step/gpu_profile.env
-ComfyUI/gpu_profile.env
-Toolkit/gpu-idle.env
-Toolkit/locale.env
+windows/ACE-Step/gpu_profile.env
+windows/ComfyUI/gpu_profile.env
+windows/Toolkit/gpu-idle.env
+windows/Toolkit/locale.env
+linux/.compose.profile
+shared/hub/__pycache__/
 .env
 *.env.local
 

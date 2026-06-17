@@ -1,0 +1,50 @@
+name: ai-studio-linux
+
+services:
+  hub:
+    build: ../shared/hub
+    restart: unless-stopped
+    ports:
+      - "7880:7880"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ../shared/web:/app/web:ro
+      - ${AI_STUDIO_DATA:-/var/lib/ai-studio}:/data
+    environment:
+      DATA_DIR: /data
+      WEB_DIR: /app/web
+      COMFY_URL: http://host.docker.internal:7871
+      ACE_URL: http://host.docker.internal:7870
+
+  comfyui:
+    image: ghcr.io/ai-dock/comfyui:latest-cuda
+    profiles: [nvidia]
+    restart: unless-stopped
+    ports:
+      - "7871:8188"
+    volumes:
+      - ${AI_STUDIO_DATA:-/var/lib/ai-studio}/comfyui:/workspace
+    environment:
+      DIRECT_ADDRESS: 0.0.0.0
+      DIRECT_PORT: "8188"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  acestep:
+    image: python:3.12-slim-bookworm
+    profiles: [nvidia, cpu]
+    restart: unless-stopped
+    ports:
+      - "7870:7870"
+    volumes:
+      - ${AI_STUDIO_DATA:-/var/lib/ai-studio}/acestep:/data
+    command: ["sleep", "infinity"]
+
+volumes:
+  aistudio_data:
