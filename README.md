@@ -1,9 +1,5 @@
 # AI Studio
 
-> **This repo is AI Studio only** — ComfyUI + ACE-Step creative stack (`:7880` hub).
-> Not [Brain AI Hub](https://github.com/lobrzut/brain) (Ollama vault/RAG/MCP, `:7860`) or [NetDash](https://github.com/lobrzut/netdash) (homelab dashboard, `:18787`).
-> Comparison table: [brain/docs/HOMELAB-PROJECTS.md](https://github.com/lobrzut/brain/blob/main/docs/HOMELAB-PROJECTS.md)
-
 Portable AI creative stack for **Windows** and **Linux** — one repository, shared dashboard, platform-specific installers.
 
 Generate images and video with **ComfyUI**, music with **ACE-Step**, and handle audio post-production from a single **dashboard hub** (`:7880`): service control, GPU helpers, Comfy output gallery, drag-and-drop mastering/stems/lyrics, and more.
